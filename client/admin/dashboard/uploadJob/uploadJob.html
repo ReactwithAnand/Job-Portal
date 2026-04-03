@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post a Job</title>
+    <link rel="stylesheet" href="./uploadJob.css">
+    <script src="./uploadJob.js" defer></script>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <svg class="icon" style="width:24px; height:24px" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+            TechCorp
+        </div>
+        <div class="navbar-user">
+            <button class="profile-menu" id="profileMenuButton" type="button" aria-label="Account menu"
+                aria-haspopup="menu" aria-expanded="false" aria-controls="profilePopup">
+                <img src="https://i.pravatar.cc/150?img=33" alt="Company Logo">
+            </button>
+
+            <div class="profile-popup" id="profilePopup" role="menu" aria-labelledby="profileMenuButton" hidden>
+                <p class="profile-popup-title">Hello CYRUS</p>
+                <button class="profile-popup-button" id="logoutButton" type="button" role="menuitem">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <aside class="sidebar" aria-label="Posting steps">
+            <div class="sidebar-header">
+                <h1>Post a job</h1>
+                <span class="badge-free">Free</span>
+            </div>
+
+            <div class="step-list">
+                <div class="step-item active" id="nav-step-1">Job details</div>
+                <div class="step-item" id="nav-step-2">Candidate preferences</div>
+                <div class="step-item" id="nav-step-3">Salary &amp; description</div>
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <form id="jobForm" novalidate>
+                <div class="form-section active" id="step-1">
+                    <div class="section-heading">
+                        <h2>Start with the basics</h2>
+                        <p>Set the role, work setup, and location details recruiters need first.</p>
+                    </div>
+
+                    <div class="form-group" id="group-title">
+                        <label class="form-label" for="title">Job title <span class="required-mark">*</span></label>
+                        <input type="text" id="title" class="form-control" placeholder="Ex. Sales Manager">
+                        <div class="error-message">Please enter a job title</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col form-group" id="group-jobType">
+                            <label class="form-label" for="jobType">Job type <span class="required-mark">*</span></label>
+                            <select id="jobType" class="form-control">
+                                <option value="">Select job type</option>
+                                <option value="Full-time">Full-time</option>
+                                <option value="Part-time">Part-time</option>
+                                <option value="Contract">Contract</option>
+                                <option value="Internship">Internship</option>
+                            </select>
+                            <div class="error-message">Please select a job type</div>
+                        </div>
+
+                        <div class="col form-group" id="group-workMode">
+                            <label class="form-label" for="workMode">Work mode <span class="required-mark">*</span></label>
+                            <select id="workMode" class="form-control">
+                                <option value="">Select work mode</option>
+                                <option value="On-site">On-site</option>
+                                <option value="Remote">Remote</option>
+                                <option value="Hybrid">Hybrid</option>
+                            </select>
+                            <div class="error-message">Please select a work mode</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="group-location">
+                        <label class="form-label" for="location">Location (comma separated) <span
+                                class="required-mark">*</span></label>
+                        <input type="text" id="location" class="form-control"
+                            placeholder="Ex. Mumbai, Delhi, Bangalore">
+                        <div class="error-message">Please enter at least one location</div>
+                    </div>
+
+                    <div class="form-group" id="group-vacancies">
+                        <label class="form-label" for="vacancies">Number of vacancies <span
+                                class="required-mark">*</span></label>
+                        <input type="number" id="vacancies" class="form-control" placeholder="Ex. 5" min="1">
+                        <div class="error-message">Please enter a valid vacancy count</div>
+                    </div>
+                </div>
+
+                <div class="form-section" id="step-2">
+                    <div class="section-heading">
+                        <h2>Define candidate preferences</h2>
+                        <p>Clarify who fits this role best so applications come in cleaner.</p>
+                    </div>
+
+                    <div class="form-group" id="group-experience">
+                        <label class="form-label">Work experience (years) <span
+                                class="required-mark">*</span></label>
+                        <div class="row">
+                            <div class="col">
+                                <select id="expMin" class="form-control">
+                                    <option value="">Min exp.</option>
+                                    <option value="0">0 years (Fresher)</option>
+                                    <option value="1">1 year</option>
+                                    <option value="2">2 years</option>
+                                    <option value="3">3 years</option>
+                                    <option value="5">5+ years</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <select id="expMax" class="form-control">
+                                    <option value="">Max exp.</option>
+                                    <option value="1">1 year</option>
+                                    <option value="2">2 years</option>
+                                    <option value="3">3 years</option>
+                                    <option value="5">5 years</option>
+                                    <option value="10">10+ years</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="error-message">Please select a valid experience range</div>
+                    </div>
+
+                    <div class="form-group" id="group-skills">
+                        <label class="form-label" for="requiredSkills">Required skills (comma separated) <span
+                                class="required-mark">*</span></label>
+                        <input type="text" id="requiredSkills" class="form-control"
+                            placeholder="Ex. JavaScript, React, Node.js">
+                        <div class="error-message">Please enter required skills</div>
+                    </div>
+
+                    <div class="form-group" id="group-qualifications">
+                        <label class="form-label" for="qualifications">Qualifications (comma separated) <span
+                                class="required-mark">*</span></label>
+                        <input type="text" id="qualifications" class="form-control"
+                            placeholder="Ex. B.Tech, MCA, Any Graduate">
+                        <div class="error-message">Please enter required qualifications</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="ageLimit">Age limit (optional)</label>
+                        <input type="number" id="ageLimit" class="form-control" placeholder="Ex. 30" min="18">
+                    </div>
+                </div>
+
+                <div class="form-section" id="step-3">
+                    <div class="section-heading">
+                        <h2>Finish the offer details</h2>
+                        <p>Add compensation, closing date, and the final role description.</p>
+                    </div>
+
+                    <div class="form-group" id="group-salary">
+                        <label class="form-label">Salary per month (&#8377;) <span
+                                class="required-mark">*</span></label>
+                        <div class="row">
+                            <div class="col input-group">
+                                <div class="input-addon">&#8377;</div>
+                                <input type="number" id="salaryMin" class="form-control" placeholder="Min" min="0">
+                            </div>
+                            <div class="col input-group">
+                                <div class="input-addon">&#8377;</div>
+                                <input type="number" id="salaryMax" class="form-control" placeholder="Max" min="0">
+                            </div>
+                        </div>
+                        <div class="error-message">Please enter a valid salary range</div>
+                    </div>
+
+                    <div class="form-group" id="group-deadline">
+                        <label class="form-label" for="applicationDeadline">Application deadline <span
+                                class="required-mark">*</span></label>
+                        <input type="date" id="applicationDeadline" class="form-control">
+                        <div class="error-message">Please select an application deadline</div>
+                    </div>
+
+                    <div class="form-group" id="group-description">
+                        <label class="form-label" for="description">Job description <span
+                                class="required-mark">*</span></label>
+                        <textarea id="description" class="form-control"
+                            placeholder="Describe the role, responsibilities, expectations, and what makes it a good fit."></textarea>
+                        <div class="error-message">Please provide a job description</div>
+                    </div>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <footer class="page-footer">
+        <button class="btn-back" id="btnBack" type="button">Back</button>
+        <button class="btn-next" id="btnNext" type="button">Next</button>
+    </footer>
+
+    <div class="success-overlay" id="successOverlay" hidden>
+        <div class="success-icon">&#10003;</div>
+        <h2 class="success-title">Job Posted Successfully</h2>
+        <p class="success-copy">Your job post is ready. You can publish another role now or head back to the dashboard to review and manage your listings.</p>
+        <div class="success-actions">
+            <button class="btn-next" id="postAnotherJobButton" type="button">Post Another Job</button>
+            <a class="btn-secondary-link" href="../controlJob/controlJob.html">Return to the Dashboard</a>
+        </div>
+    </div>
+</body>
+
+</html>
