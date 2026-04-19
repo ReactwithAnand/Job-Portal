@@ -15,7 +15,15 @@
             TechCorp
         </div>
         <div class="navbar-user">
-            <img src="https://i.pravatar.cc/150?img=33" alt="Company Logo">
+            <button class="profile-menu" id="profileMenuButton" type="button" aria-label="Account menu"
+                aria-haspopup="menu" aria-expanded="false" aria-controls="profilePopup">
+                <img src="https://i.pravatar.cc/150?img=33" alt="Company Logo">
+            </button>
+
+            <div class="profile-popup" id="profilePopup" role="menu" aria-labelledby="profileMenuButton" hidden>
+                <p class="profile-popup-title">Hello CYRUS</p>
+                <button class="profile-popup-button" id="logoutButton" type="button" role="menuitem">Logout</button>
+            </div>
         </div>
 
     </nav>
@@ -56,6 +64,39 @@
             <!-- Jobs will be injected here via JavaScript -->
         </div>
     </main>
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand-block">
+                <a class="brand footer-brand" href="#">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="17" fill="currentColor"></circle>
+                        <path
+                            d="M16.2 7.8c-4.4.7-8 4.3-8.7 8.7 2.5-1.6 5.9-1.4 8.2.8 2.3 2.3 2.5 5.7.8 8.2 4.4-.7 8-4.3 8.7-8.7-2.5 1.6-5.9 1.4-8.2-.8-2.3-2.3-2.5-5.7-.8-8.2Z"
+                            fill="#fff"></path>
+                        <circle cx="18" cy="18" r="4.1" fill="#fff"></circle>
+                    </svg>
+                    <span class="brand-wordmark"><span class="brand-blue">naukri</span><span
+                            class="brand-orange">campus</span></span>
+                </a>
+            </div>
+            <div class="footer-links">
+                <div>
+                    <a href="#">About us</a>
+                    <a href="#">Careers</a>
+                    <a href="#">Employer home</a>
+                </div>
+                <div style="margin-top: 0.8rem;">
+                    <a href="#">Help center</a>
+                    <a href="#">Report issue</a>
+                </div>
+                <div>
+                    <a href="#">Privacy policy</a>
+                    <a href="#">Terms &amp; conditions</a>
+                    <a href="#">Trust &amp; safety</a>
+                </div>
+            </div>
+        </div>
+    </footer>
     <script src="controlJob.js"></script>
 </body>
 </html>

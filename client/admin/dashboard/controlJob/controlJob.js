@@ -72,7 +72,8 @@
             clock: '<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
             users: '<svg class="icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
             check: '<svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>',
-            x: '<svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'
+            x: '<svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
+            trash: '<svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>'
         };
 
         // --- CORE LOGIC ---
@@ -80,6 +81,7 @@
         function initDashboard() {
             updateStatistics();
             renderJobList();
+            initProfileMenu();
         }
 
         function updateStatistics() {
@@ -116,6 +118,20 @@
             }
         }
 
+        function deletePostJob(jobId, event) {
+            if (event) event.stopPropagation();
+
+            const jobIndex = dummyJobs.findIndex(job => job._id === jobId);
+            if (jobIndex === -1) {
+                return;
+            }
+
+            dummyJobs.splice(jobIndex, 1);
+            dummyAppliedJobs = dummyAppliedJobs.filter(app => app.job !== jobId);
+            updateStatistics();
+            renderJobList();
+        }
+
         function getJobApplicants(jobId) {
             return dummyAppliedJobs
                 .filter(app => app.job === jobId)
@@ -130,9 +146,20 @@
             return date.toLocaleDateString('en-US', options);
         }
 
+        function getApplicantMatchPercentage(app, job) {
+            const seed = `${app._id}${job._id}`.split('').reduce((total, char) => total + char.charCodeAt(0), 0);
+            const statusBonus = app.status === 'Shortlisted' ? 8 : app.status === 'Rejected' ? -10 : 0;
+            return Math.max(35, Math.min(98, 62 + (seed % 29) + statusBonus));
+        }
+
         function renderJobList() {
             const container = document.getElementById('job-list-container');
             container.innerHTML = '';
+
+            if (dummyJobs.length === 0) {
+                container.innerHTML = `<div class="empty-state">No posted jobs yet. Post a new role to start receiving applications.</div>`;
+                return;
+            }
 
             dummyJobs.forEach(job => {
                 const applicants = getJobApplicants(job._id);
@@ -154,8 +181,13 @@
                             <h3>${job.title}</h3>
                             
                         </div>
-                        <div class="deadline-badge">
-                            ${icons.clock} Ends: ${deadlineText}
+                        <div class="job-header-actions">
+                            <div class="deadline-badge">
+                                ${icons.clock} Ends: ${deadlineText}
+                            </div>
+                            <button class="delete-job-btn" type="button" aria-label="Delete ${job.title}" onclick="deletePostJob('${job._id}', event)">
+                                ${icons.trash}
+                            </button>
                         </div>
                     </div>
 
@@ -206,6 +238,7 @@
                 } else {
                     applicants.forEach(app => {
                         const isPending = app.status === 'Pending';
+                        const matchPercentage = getApplicantMatchPercentage(app, job);
                         
                         let badgeHtml = '';
                         if(app.status === 'Shortlisted') {
@@ -225,6 +258,10 @@
                                 </div>
                             </div>
                             <div class="applicant-actions">
+                                <p>Matched</p>
+                                <div class="match-ring" style="--match: ${matchPercentage};" aria-label="${matchPercentage}% profile match">
+                                    <span>${matchPercentage}%</span>
+                                </div>
                                 ${!isPending ? badgeHtml : `
                                     <button class="btn btn-select" onclick="updateApplicationStatus('${app._id}', 'Shortlisted', event)">Select</button>
                                     <button class="btn btn-reject" onclick="updateApplicationStatus('${app._id}', 'Rejected', event)">Reject</button>
@@ -240,6 +277,92 @@
                 jobCard.appendChild(jobSummary);
                 jobCard.appendChild(applicantsContainer);
                 container.appendChild(jobCard);
+            });
+        }
+
+        function initProfileMenu() {
+            const profileMenuButton = document.getElementById('profileMenuButton');
+            const profilePopup = document.getElementById('profilePopup');
+            const logoutButton = document.getElementById('logoutButton');
+            let lastFocusedElement = null;
+
+            if (!profileMenuButton || !profilePopup) {
+                return;
+            }
+
+            function isProfilePopupOpen() {
+                return !profilePopup.hidden;
+            }
+
+            function openProfilePopup() {
+                lastFocusedElement = profileMenuButton;
+                profilePopup.hidden = false;
+                profilePopup.classList.add('open');
+                profileMenuButton.setAttribute('aria-expanded', 'true');
+
+                window.requestAnimationFrame(() => {
+                    if (logoutButton) {
+                        logoutButton.focus();
+                    }
+                });
+            }
+
+            function closeProfilePopup(shouldRestoreFocus = true) {
+                if (!isProfilePopupOpen()) {
+                    return;
+                }
+
+                profilePopup.hidden = true;
+                profilePopup.classList.remove('open');
+                profileMenuButton.setAttribute('aria-expanded', 'false');
+
+                if (shouldRestoreFocus && lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+                    lastFocusedElement.focus();
+                }
+            }
+
+            function toggleProfilePopup() {
+                if (isProfilePopupOpen()) {
+                    closeProfilePopup();
+                    return;
+                }
+
+                openProfilePopup();
+            }
+
+            profileMenuButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                toggleProfilePopup();
+            });
+
+            profilePopup.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+
+            if (logoutButton) {
+                logoutButton.addEventListener('click', () => {
+                    console.log('Logout requested');
+                    closeProfilePopup();
+                });
+            }
+
+            document.addEventListener('click', (event) => {
+                if (!isProfilePopupOpen()) {
+                    return;
+                }
+
+                if (profileMenuButton.contains(event.target) || profilePopup.contains(event.target)) {
+                    return;
+                }
+
+                closeProfilePopup(false);
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && isProfilePopupOpen()) {
+                    event.preventDefault();
+                    closeProfilePopup();
+                }
             });
         }
 
