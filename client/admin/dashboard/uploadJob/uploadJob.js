@@ -1,3 +1,5 @@
+import {API_BASE_URL} from "../../../constants/constant.js";
+
 (function () {
     var currentStep = 1;
     var totalSteps = 3;
@@ -23,7 +25,6 @@
         var activePill = postingAsPills.find(function (pill) {
             return pill.classList.contains("active");
         });
-
         return activePill ? activePill.getAttribute("data-posting-as") : "";
     }
 
@@ -35,7 +36,6 @@
 
     function setError(groupId) {
         var group = $(groupId);
-
         if (group) {
             group.classList.add("has-error");
         }
@@ -43,7 +43,6 @@
 
     function clearErrorForField(field) {
         var group = field.closest(".form-group");
-
         if (group) {
             group.classList.remove("has-error");
         }
@@ -51,72 +50,28 @@
 
     function validateStep(step) {
         var isValid = true;
-        var expMin;
-        var expMax;
-        var salaryMin;
-        var salaryMax;
+        var expMin, expMax, salaryMin, salaryMax;
 
         if (step === 1) {
-            if (!$("title").value.trim()) {
-                setError("group-title");
-                isValid = false;
-            }
+            if (!$("title").value.trim()) { setError("group-title"); isValid = false; }
+            if (!$("jobType").value) { setError("group-jobType"); isValid = false; }
+            if (!$("workMode").value) { setError("group-workMode"); isValid = false; }
+            if (!parseCommaSeparated($("location").value).length) { setError("group-location"); isValid = false; }
+            if (!$("vacancies").value || Number($("vacancies").value) < 1) { setError("group-vacancies"); isValid = false; }
 
-            if (!$("jobType").value) {
-                setError("group-jobType");
-                isValid = false;
-            }
-
-            if (!$("workMode").value) {
-                setError("group-workMode");
-                isValid = false;
-            }
-
-            if (!parseCommaSeparated($("location").value).length) {
-                setError("group-location");
-                isValid = false;
-            }
-
-            if (!$("vacancies").value || Number($("vacancies").value) < 1) {
-                setError("group-vacancies");
-                isValid = false;
-            }
         } else if (step === 2) {
             expMin = Number($("expMin").value);
             expMax = Number($("expMax").value);
+            if (!$("expMin").value || !$("expMax").value || expMin > expMax) { setError("group-experience"); isValid = false; }
+            if (!parseCommaSeparated($("requiredSkills").value).length) { setError("group-skills"); isValid = false; }
+            if (!parseCommaSeparated($("qualifications").value).length) { setError("group-qualifications"); isValid = false; }
 
-            if (!$("expMin").value || !$("expMax").value || expMin > expMax) {
-                setError("group-experience");
-                isValid = false;
-            }
-
-            if (!parseCommaSeparated($("requiredSkills").value).length) {
-                setError("group-skills");
-                isValid = false;
-            }
-
-            if (!parseCommaSeparated($("qualifications").value).length) {
-                setError("group-qualifications");
-                isValid = false;
-            }
         } else if (step === 3) {
             salaryMin = Number($("salaryMin").value);
             salaryMax = Number($("salaryMax").value);
-
-            if (!$("salaryMin").value || !$("salaryMax").value || salaryMin > salaryMax) {
-                setError("group-salary");
-                isValid = false;
-            }
-
-            if (!$("applicationDeadline").value) {
-                setError("group-deadline");
-                isValid = false;
-            }
-
-            if (!$("description").value.trim()) {
-                setError("group-description");
-                isValid = false;
-            }
+            if (!$("salaryMin").value || !$("salaryMax").value || salaryMin > salaryMax) { setError("group-salary"); isValid = false; }
+            if (!$("applicationDeadline").value) { setError("group-deadline"); isValid = false; }
+            if (!$("description").value.trim()) { setError("group-description"); isValid = false; }
         }
 
         return isValid;
@@ -141,54 +96,73 @@
         }
     }
 
+    function setSubmitting(isSubmitting) {
+        if (!nextButton) return;
+        nextButton.disabled = isSubmitting;
+        nextButton.textContent = isSubmitting ? "Posting..." : "Post Job";
+    }
+
+    function showApiError(message) {
+        var existing = document.getElementById("api-error-toast");
+        if (existing) existing.remove();
+
+        var toast = document.createElement("div");
+        toast.id = "api-error-toast";
+        toast.style.cssText = [
+            "position: fixed",
+            "bottom: 80px",
+            "left: 50%",
+            "transform: translateX(-50%)",
+            "background: #dc2626",
+            "color: #fff",
+            "padding: 12px 24px",
+            "border-radius: 8px",
+            "font-size: 14px",
+            "z-index: 9999",
+            "box-shadow: 0 4px 12px rgba(0,0,0,0.2)",
+            "max-width: 90vw",
+            "text-align: center"
+        ].join(";");
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(function () {
+            if (toast.parentNode) toast.remove();
+        }, 5000);
+    }
+
     function isProfilePopupOpen() {
         return Boolean(profilePopup && !profilePopup.hidden);
     }
 
     function openProfilePopup() {
-        if (!profilePopup || !profileMenuButton) {
-            return;
-        }
-
+        if (!profilePopup || !profileMenuButton) return;
         lastProfileMenuFocusedElement = profileMenuButton;
         profilePopup.hidden = false;
         profilePopup.classList.add("open");
         profileMenuButton.setAttribute("aria-expanded", "true");
-
         window.requestAnimationFrame(function () {
-            if (logoutButton) {
-                logoutButton.focus();
-            }
+            if (logoutButton) logoutButton.focus();
         });
     }
 
     function closeProfilePopup() {
-        if (!profilePopup || !profileMenuButton || profilePopup.hidden) {
-            return;
-        }
-
+        if (!profilePopup || !profileMenuButton || profilePopup.hidden) return;
         profilePopup.hidden = true;
         profilePopup.classList.remove("open");
         profileMenuButton.setAttribute("aria-expanded", "false");
-
         if (lastProfileMenuFocusedElement && typeof lastProfileMenuFocusedElement.focus === "function") {
             lastProfileMenuFocusedElement.focus();
         }
     }
 
     function toggleProfilePopup() {
-        if (isProfilePopupOpen()) {
-            closeProfilePopup();
-            return;
-        }
-
+        if (isProfilePopupOpen()) { closeProfilePopup(); return; }
         openProfilePopup();
     }
 
     function goNext() {
-        if (!validateStep(currentStep)) {
-            return;
-        }
+        if (!validateStep(currentStep)) return;
 
         if (currentStep < totalSteps) {
             currentStep += 1;
@@ -200,45 +174,78 @@
     }
 
     function goBack() {
-        if (currentStep <= 1) {
-            return;
-        }
-
+        if (currentStep <= 1) return;
         currentStep -= 1;
         updateStepUI();
     }
 
     function submitForm() {
         var jobData = {
-            postingAs: getPostingAs(),
             title: $("title").value.trim(),
             description: $("description").value.trim(),
             location: parseCommaSeparated($("location").value),
             salaryRange: $("salaryMin").value + "-" + $("salaryMax").value,
             jobType: $("jobType").value,
-            qualifications: parseCommaSeparated($("qualifications").value),
+            qualifications: parseCommaSeparated($("qualifications").value).map(function(q) {
+                return { degree: q };
+            }),
             experiences: {
-                years: $("expMin").value + "-" + $("expMax").value
+                min: Number($("expMin").value),
+                max: Number($("expMax").value)
             },
             applicationDeadline: $("applicationDeadline").value,
             workMode: $("workMode").value,
             requiredSkills: parseCommaSeparated($("requiredSkills").value),
-            ageLimit: $("ageLimit").value ? Number($("ageLimit").value) : null,
             vacancies: Number($("vacancies").value)
         };
 
-        if (!jobData.ageLimit) {
-            delete jobData.ageLimit;
+        if ($("ageLimit").value) {
+            jobData.ageLimit = Number($("ageLimit").value);
         }
 
         console.log("=== PAYLOAD READY FOR API ===");
         console.log(JSON.stringify(jobData, null, 2));
 
-        if (successOverlay) {
-            successOverlay.hidden = false;
-            successOverlay.classList.add("is-visible");
-        }
+        setSubmitting(true);
+
+        fetch(API_BASE_URL + "/jobs/add", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            credentials: "include",
+            body: JSON.stringify(jobData)
+        })
+        .then(function (response) {
+            return response.json().then(function (data) {
+                return { status: response.status, ok: response.ok, data: data };
+            });
+        })
+        .then(function (result) {
+            setSubmitting(false);
+
+            if (!result.ok) {
+                var message = (result.data && result.data.message)
+                    ? result.data.message
+                    : "Something went wrong. Please try again.";
+                showApiError(message);
+                return;
+            }
+
+            console.log("Job created:", result.data);
+
+            if (successOverlay) {
+                successOverlay.hidden = false;
+                successOverlay.classList.add("is-visible");
+            }
+        })
+        .catch(function (error) {
+            setSubmitting(false);
+            console.error("Network error:", error);
+            showApiError("Network error — could not reach the server. Make sure the backend is running on port 8000.");
+        });
     }
+
 
     postingAsPills.forEach(function (pill) {
         pill.addEventListener("click", function () {
@@ -246,33 +253,22 @@
                 item.classList.remove("active");
                 item.setAttribute("aria-pressed", "false");
             });
-
             pill.classList.add("active");
             pill.setAttribute("aria-pressed", "true");
         });
     });
 
     formControls.forEach(function (field) {
-        field.addEventListener("input", function () {
-            clearErrorForField(field);
-        });
-
-        field.addEventListener("change", function () {
-            clearErrorForField(field);
-        });
+        field.addEventListener("input", function () { clearErrorForField(field); });
+        field.addEventListener("change", function () { clearErrorForField(field); });
     });
 
     if (applicationDeadlineInput) {
         applicationDeadlineInput.min = new Date().toISOString().split("T")[0];
     }
 
-    if (backButton) {
-        backButton.addEventListener("click", goBack);
-    }
-
-    if (nextButton) {
-        nextButton.addEventListener("click", goNext);
-    }
+    if (backButton) { backButton.addEventListener("click", goBack); }
+    if (nextButton) { nextButton.addEventListener("click", goNext); }
 
     if (postAnotherJobButton) {
         postAnotherJobButton.addEventListener("click", function () {
@@ -288,9 +284,7 @@
     }
 
     if (profilePopup) {
-        profilePopup.addEventListener("click", function (event) {
-            event.stopPropagation();
-        });
+        profilePopup.addEventListener("click", function (event) { event.stopPropagation(); });
     }
 
     if (logoutButton) {
@@ -301,18 +295,9 @@
     }
 
     document.addEventListener("click", function (event) {
-        if (!isProfilePopupOpen()) {
-            return;
-        }
-
-        if (profileMenuButton && profileMenuButton.contains(event.target)) {
-            return;
-        }
-
-        if (profilePopup && profilePopup.contains(event.target)) {
-            return;
-        }
-
+        if (!isProfilePopupOpen()) return;
+        if (profileMenuButton && profileMenuButton.contains(event.target)) return;
+        if (profilePopup && profilePopup.contains(event.target)) return;
         closeProfilePopup();
     });
 

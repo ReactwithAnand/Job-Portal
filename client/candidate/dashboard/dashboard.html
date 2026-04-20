@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="dashboard.css">
+    <script src="dashboard.js" type="module" defer></script>
 </head>
+
 <body>
-        <!-- Top Navbar -->
-        <header class="topbar">
+    <!-- Top Navbar -->
+    <header class="topbar">
         <div class="topbar-inner">
             <a class="brand" href="#">
                 <svg viewBox="0 0 36 36">
@@ -43,7 +46,7 @@
 
     <!-- Main Content -->
     <main class="container">
-        
+
         <!-- Second Row: Statistics -->
         <div class="stats-grid">
             <div class="stat-card">
@@ -64,13 +67,13 @@
         <div class="section-header">
             <h2 class="section-title">My Applications</h2>
         </div>
-        
+
         <div class="job-list" id="application-list-container">
             <!-- Applications will be injected here via JavaScript -->
         </div>
     </main>
 
-        <footer class="site-footer">
+    <footer class="site-footer">
         <div class="footer-inner">
             <div class="footer-brand-block">
                 <a class="brand footer-brand" href="#">
@@ -104,7 +107,7 @@
         </div>
     </footer>
 
-        <!-- PROFILE DRAWER -->
+    <!-- PROFILE DRAWER -->
     <div class="profile-overlay" id="profileDrawerOverlay" hidden>
         <aside class="profile-drawer">
             <button class="drawer-close">
@@ -207,7 +210,6 @@
             </div>
         </aside>
     </div>
-
-    <script src="dashboard.js"></script>
 </body>
+
 </html>
