@@ -50,7 +50,17 @@ const findAppliedJobsForUser = asyncHandler(async (req, res) => {
                 from: "jobs",
                 localField: "job",
                 foreignField: "_id",
-                as: "job"
+                as: "job",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "companies",
+                            localField: "company",
+                            foreignField: "_id",
+                            as: "company"
+                        }
+                    }
+                ]
             }
         }
     ])
