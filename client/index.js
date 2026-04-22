@@ -15,6 +15,49 @@ const icons = {
     fileText: '<svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>'
 };
 
+// --- AUTH CHECK + USER DATA LOAD ---
+// Fetch current user and profile completion together on page load.
+// If not authenticated, redirect to login immediately.
+
+let currentUser = null;
+let profileCompletion = 0;
+
+(async () => {
+    try {
+        // auth check + current user
+        const userRes = await fetch(`${API_BASE_URL}/users/current`, {
+            method: "GET",
+            credentials: "include"
+        });
+
+        if (!userRes.ok) {
+            window.location.href = "candidate/authentication/login/login.html";
+            return;
+        }
+
+        const userData = await userRes.json();
+        currentUser = userData.data;
+
+        // profile completion percentage
+        const completionRes = await fetch(`${API_BASE_URL}/users/profile-completion`, {
+            method: "GET",
+            credentials: "include"
+        });
+
+        if (completionRes.ok) {
+            const completionData = await completionRes.json();
+            profileCompletion = completionData.data.profileCompletePercentage || 0;
+        }
+
+        // now that we have real data, sync the profile card and drawer
+        syncProfileDrawer();
+
+    } catch (err) {
+        console.error("Init error:", err);
+        window.location.href = "candidate/authentication/login/login.html";
+    }
+})();
+
 // --- CORE LOGIC ---
 
 function toggleJobAccordion(jobId) {
@@ -23,10 +66,8 @@ function toggleJobAccordion(jobId) {
 }
 
 async function handleApply(buttonElement, jobId, event) {
-    // Stop the click from bubbling up to the job card (which would close the accordion)
     event.stopPropagation();
 
-    // Prevent double clicks while request is in flight
     if (buttonElement.disabled) return;
     buttonElement.disabled = true;
     buttonElement.innerHTML = `Applying...`;
@@ -40,16 +81,13 @@ async function handleApply(buttonElement, jobId, event) {
         const data = await response.json();
 
         if (response.ok) {
-            // Success state
             buttonElement.innerHTML = `${icons.check} Applied Successfully`;
             buttonElement.classList.add('applied');
         } else {
-            // Already applied or other API error — still mark as applied if duplicate
             if (response.status === 400 && data?.message?.toLowerCase().includes("already applied")) {
                 buttonElement.innerHTML = `${icons.check} Already Applied`;
                 buttonElement.classList.add('applied');
             } else {
-                // Revert button so user can retry
                 buttonElement.innerHTML = `Apply Now ${icons.send}`;
                 buttonElement.disabled = false;
                 alert(data?.message || "Failed to apply. Please try again.");
@@ -85,7 +123,6 @@ function getPostedBadgeClass(createdAt) {
 }
 
 function normalizeJob(job) {
-    // Normalize API response shape to match what renderJobFeed expects
     return {
         _id: job._id,
         title: job.title,
@@ -121,7 +158,6 @@ function renderJobCard(job) {
     const postedLabel = formatPostedAt(job.createdAt);
 
     jobCard.innerHTML = `
-        <!-- Summary Area (Always Visible) -->
         <div class="job-summary" onclick="toggleJobAccordion('${job._id}')">
             <div class="posted-at ${postedBadgeClass}">
                 ${icons.clock}
@@ -159,7 +195,6 @@ function renderJobCard(job) {
             </div>
         </div>
 
-        <!-- Hidden Details Area (Expands on Click) -->
         <div class="job-details">
             <div class="detail-section">
                 <h4>Job Description</h4>
@@ -183,7 +218,6 @@ function renderJobCard(job) {
                 </div>
             </div>
 
-            <!-- Apply Button inside details -->
             <div class="action-area">
                 <button class="btn-apply" onclick="handleApply(this, '${job._id}', event)">
                     Apply Now ${icons.send}
@@ -231,42 +265,9 @@ async function renderJobFeed() {
     }
 }
 
-// --- DRAWERS ---
-
-function getStoredUserData() {
-    try {
-        return JSON.parse(localStorage.getItem("userData") || "{}");
-    } catch (error) {
-        return {};
-    }
-}
-
-function getVisibleProfileData() {
-    const storedUser = getStoredUserData();
-    const profileName = document.querySelector(".profile-card .profile-name")?.textContent.trim();
-    const profileSubtitle = (document.querySelector(".profile-card .profile-title")?.innerHTML || "")
-        .replace(/<br\s*\/?>/gi, " at ")
-        .replace(/\s+/g, " ")
-        .trim();
-    const profileImage = document.querySelector(".profile-card .profile-pic")?.getAttribute("src");
-    const completionText = document.querySelector(".profile-card .profile-progress-badge")?.textContent.trim();
-    const completion = Math.min(Math.max(Number.parseInt(completionText, 10) || 0, 0), 100);
-    const performanceValues = document.querySelectorAll(".profile-card .perf-item-value");
-
-    const topQualification = storedUser.qualifications?.[0];
-    const storedSubtitle = topQualification
-        ? `${topQualification.degree}${topQualification.department ? ` - ${topQualification.department}` : ""} at ${topQualification.institution}`
-        : "";
-
-    return {
-        name: storedUser.name || profileName || "Name",
-        subtitle: storedSubtitle || profileSubtitle || "Update Profile to stand out",
-        imageUrl: storedUser.profilePicture?.url || profileImage || "",
-        completion,
-        searchAppearances: Number.parseInt(performanceValues[0]?.textContent, 10) || 0,
-        recruiterActions: Number.parseInt(performanceValues[1]?.textContent, 10) || 0
-    };
-}
+// --- PROFILE SYNC ---
+// Reads from the real API data (currentUser + profileCompletion) and
+// updates both the left sidebar profile card and the profile drawer.
 
 function getProgressColor(percentage) {
     if (percentage > 75) return "#2abf68";
@@ -276,53 +277,74 @@ function getProgressColor(percentage) {
 }
 
 function syncProfileDrawer() {
-    const profile = getVisibleProfileData();
-    const color = getProgressColor(profile.completion);
-    const homeProfileRing = document.querySelector(".profile-pic-container");
-    const homeProfileBadge = document.querySelector(".profile-progress-badge");
+    if (!currentUser) return;
+
+    const completion = profileCompletion;
+    const color = getProgressColor(completion);
+
+    const topQualification = currentUser.qualifications?.[0];
+    const subtitle = topQualification
+        ? `${topQualification.degree}${topQualification.department ? ` - ${topQualification.department}` : ""} at ${topQualification.institution}`
+        : (currentUser.email || "Update Profile to stand out");
+
+    const imageUrl = currentUser.profilePicture?.url || "";
+
+    // --- Left sidebar profile card ---
+    const profileName = document.querySelector(".profile-card .profile-name");
+    const profileTitle = document.querySelector(".profile-card .profile-title");
+    const profilePic = document.querySelector(".profile-card .profile-pic");
+    const profileBadge = document.querySelector(".profile-card .profile-progress-badge");
+    const profilePicContainer = document.querySelector(".profile-pic-container");
+
+    if (profileName) profileName.textContent = currentUser.name || "User";
+    if (profileTitle) profileTitle.textContent = subtitle;
+    if (profilePic && imageUrl) profilePic.src = imageUrl;
+    if (profileBadge) {
+        profileBadge.textContent = `${completion}%`;
+        profileBadge.style.color = color;
+    }
+    if (profilePicContainer) {
+        profilePicContainer.style.setProperty("--profile-progress", `${completion}%`);
+        profilePicContainer.style.setProperty("--profile-ring-color", color);
+    }
+
+    // --- Header avatar ---
+    const headerAvatar = document.getElementById("headerProfileAvatar");
+    if (headerAvatar && imageUrl) {
+        headerAvatar.style.backgroundImage = `url("${imageUrl}")`;
+        headerAvatar.classList.add("has-photo");
+    }
+
+    // --- Profile drawer ---
     const drawerName = document.getElementById("drawerProfileName");
     const drawerSubtitle = document.getElementById("drawerProfileSubtitle");
     const drawerPercentage = document.getElementById("drawerPercentage");
     const drawerRing = document.getElementById("drawerRing");
-    const headerAvatar = document.getElementById("headerProfileAvatar");
     const drawerAvatarInner = document.querySelector(".profile-avatar-inner");
-    const performanceValues = document.querySelectorAll(".profile-drawer .performance-value");
+    const performanceValues = document.querySelectorAll(".performance-value");
 
-    if (drawerName) drawerName.textContent = profile.name;
-    if (drawerSubtitle) drawerSubtitle.textContent = profile.subtitle;
-    if (homeProfileRing) {
-        homeProfileRing.style.setProperty("--profile-progress", `${profile.completion}%`);
-        homeProfileRing.style.setProperty("--profile-ring-color", color);
-    }
-    if (homeProfileBadge) {
-        homeProfileBadge.textContent = `${profile.completion}%`;
-        homeProfileBadge.style.color = color;
-    }
+    if (drawerName) drawerName.textContent = currentUser.name || "User";
+    if (drawerSubtitle) drawerSubtitle.textContent = subtitle;
     if (drawerPercentage) {
-        drawerPercentage.textContent = `${profile.completion}%`;
+        drawerPercentage.textContent = `${completion}%`;
         drawerPercentage.style.color = color;
     }
     if (drawerRing) {
-        drawerRing.style.background = `conic-gradient(from 180deg, ${color} 0 ${profile.completion}%, #e4e8f2 ${profile.completion}% 100%)`;
+        drawerRing.style.background = `conic-gradient(from 180deg, ${color} 0 ${completion}%, #e4e8f2 ${completion}% 100%)`;
     }
-    if (performanceValues[0]) performanceValues[0].textContent = profile.searchAppearances;
-    if (performanceValues[1]) performanceValues[1].textContent = profile.recruiterActions;
-
-    if (profile.imageUrl) {
-        if (headerAvatar) {
-            headerAvatar.style.backgroundImage = `url("${profile.imageUrl}")`;
-            headerAvatar.classList.add("has-photo");
-        }
-        if (drawerAvatarInner) {
-            drawerAvatarInner.style.backgroundImage = `url("${profile.imageUrl}")`;
-            drawerAvatarInner.style.backgroundPosition = "center";
-            drawerAvatarInner.style.backgroundSize = "cover";
-            drawerAvatarInner.querySelectorAll("span").forEach(part => {
-                part.style.display = "none";
-            });
-        }
+    if (drawerAvatarInner && imageUrl) {
+        drawerAvatarInner.style.backgroundImage = `url("${imageUrl}")`;
+        drawerAvatarInner.style.backgroundPosition = "center";
+        drawerAvatarInner.style.backgroundSize = "cover";
+        drawerAvatarInner.querySelectorAll("span").forEach(part => {
+            part.style.display = "none";
+        });
     }
+    if (performanceValues[0]) performanceValues[0].textContent = currentUser.searchAppearances || 0;
+    if (performanceValues[1]) performanceValues[1].textContent = currentUser.recruiterActions || 0;
 }
+
+// --- DRAWERS ---
 
 function hasOpenDrawer() {
     return Boolean(document.querySelector(".profile-overlay.open, .notifications-overlay.open"));
@@ -334,7 +356,6 @@ function openDrawer(id) {
 
     if (id === "profileDrawerOverlay") {
         closeDrawer("notificationsOverlay");
-        syncProfileDrawer();
     } else if (id === "notificationsOverlay") {
         closeDrawer("profileDrawerOverlay");
     }
@@ -369,10 +390,9 @@ async function handleLogout() {
             credentials: "include"
         });
     } catch (error) {
-        console.warn("Logout request failed. Clearing local session only.", error);
+        console.warn("Logout request failed.", error);
     } finally {
-        localStorage.removeItem("userData");
-        window.location.href = "authentication/login/login.html";
+        window.location.href = "candidate/authentication/login/login.html";
     }
 }
 
@@ -408,15 +428,13 @@ function bindDrawerEvents() {
 
 function initializeHomePage() {
     renderJobFeed();
-    syncProfileDrawer();
     bindDrawerEvents();
+    // syncProfileDrawer() is called after API resolves in the IIFE above,
+    // so no need to call it here again
 }
 
 // Expose functions used in inline onclick attributes to the global scope.
-// Required because this file is loaded as type="module", which is scoped
-// and does not attach anything to window automatically.
 window.toggleJobAccordion = toggleJobAccordion;
 window.handleApply = handleApply;
 
-// Initialize Feed and Drawers
 document.addEventListener("DOMContentLoaded", initializeHomePage);

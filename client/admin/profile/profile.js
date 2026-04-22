@@ -1,12 +1,65 @@
+import { API_BASE_URL } from "../../constants/constant.js";
+
 const COMPANY_STORAGE_KEY = "naukriCampusCompanyProfile";
 
 let companyData = loadCompanyData();
 let lastProfileMenuFocusedElement = null;
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     bindEvents();
+    await fetchAndSyncCompanyData();
     renderUI();
 });
+
+// ---------------------------------------------------------------------------
+// API helpers
+// ---------------------------------------------------------------------------
+
+async function apiFetch(path, options = {}) {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+        credentials: "include",
+        ...options,
+        headers: {
+            ...(options.headers || {})
+        }
+    });
+
+    if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        throw new Error(errorBody.message || `Request failed: ${response.status}`);
+    }
+
+    return response.json();
+}
+
+// Fetch live company data from server and sync into local state
+async function fetchAndSyncCompanyData() {
+    try {
+        const result = await apiFetch("/companies/current");
+        const s = result.data; // server model shape
+
+        companyData = {
+            ...createDefaultCompanyData(),
+            name: s.name || "",
+            email: s.email || "",
+            industry: s.industry || "",
+            location: s.location || "",
+            website: s.website || "",
+            size: s.size || "",
+            description: s.description || "",
+            createdAt: s.createdAt || "",
+            logoDataUrl: s.logo?.url || ""
+        };
+
+        persistCompanyData();
+    } catch (error) {
+        console.warn("Could not load profile from server, using cached data.", error.message);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Event binding
+// ---------------------------------------------------------------------------
 
 function bindEvents() {
     const profileMenuButton = document.getElementById("profileMenuButton");
@@ -39,9 +92,7 @@ function bindEvents() {
         modal.querySelector(".modal-close")?.addEventListener("click", () => closeModal(modal.id));
         modal.querySelector(".btn-cancel")?.addEventListener("click", () => closeModal(modal.id));
         modal.addEventListener("click", (event) => {
-            if (event.target === modal) {
-                closeModal(modal.id);
-            }
+            if (event.target === modal) closeModal(modal.id);
         });
     });
 
@@ -50,18 +101,9 @@ function bindEvents() {
     document.getElementById("logoutBtn")?.addEventListener("click", logoutCompany);
 
     document.addEventListener("click", (event) => {
-        if (!isProfilePopupOpen()) {
-            return;
-        }
-
-        if (profileMenuButton && profileMenuButton.contains(event.target)) {
-            return;
-        }
-
-        if (profilePopup && profilePopup.contains(event.target)) {
-            return;
-        }
-
+        if (!isProfilePopupOpen()) return;
+        if (profileMenuButton?.contains(event.target)) return;
+        if (profilePopup?.contains(event.target)) return;
         closeProfilePopup();
     });
 
@@ -73,53 +115,43 @@ function bindEvents() {
     });
 }
 
+// ---------------------------------------------------------------------------
+// localStorage helpers
+// ---------------------------------------------------------------------------
+
 function createDefaultCompanyData() {
     return {
-        name: "Naukri Campus Hiring Studio",
-        industry: "Technology",
-        location: "Noida, Uttar Pradesh",
-        email: "talent@naukricampus.example",
-        contactPhone: "+91 98765 43210",
+        name: "",
+        industry: "",
+        location: "",
+        email: "",
+        contactPhone: "",
         website: "",
         size: "",
         description: "",
-        createdAt: "2025-01-15T00:00:00.000Z",
+        createdAt: "",
         logoDataUrl: ""
     };
 }
 
 function loadCompanyData() {
     const defaultData = createDefaultCompanyData();
-
     try {
         const storedData = JSON.parse(localStorage.getItem(COMPANY_STORAGE_KEY) || "{}");
-        return normalizeCompanyData(storedData, defaultData);
+        return { ...defaultData, ...storedData };
     } catch (error) {
         console.error("Unable to read saved company profile", error);
         return defaultData;
     }
 }
 
-function normalizeCompanyData(storedData, defaultData) {
-    return {
-        ...defaultData,
-        ...storedData,
-        name: storedData.name || defaultData.name,
-        industry: storedData.industry || defaultData.industry,
-        location: storedData.location || defaultData.location,
-        email: storedData.email || defaultData.email,
-        contactPhone: storedData.contactPhone || defaultData.contactPhone,
-        website: storedData.website || "",
-        size: storedData.size || "",
-        description: storedData.description || "",
-        createdAt: storedData.createdAt || defaultData.createdAt,
-        logoDataUrl: storedData.logoDataUrl || storedData.logo?.url || ""
-    };
-}
-
 function persistCompanyData() {
     localStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(companyData));
 }
+
+// ---------------------------------------------------------------------------
+// Render
+// ---------------------------------------------------------------------------
 
 function renderUI() {
     const initials = getInitials(companyData.name);
@@ -129,6 +161,7 @@ function renderUI() {
     const size = companyData.size || "Not added yet";
     const websiteText = companyData.website || "Not added yet";
     const websiteLink = normalizeWebsite(companyData.website);
+
     setText("displayCompanyName", companyData.name || "Company Name");
     setText("displayIndustry", industry);
     setText("displayLocation", location);
@@ -138,7 +171,8 @@ function renderUI() {
 
     setText(
         "companyOverviewText",
-        companyData.description || "Add a strong company overview to help candidates understand your mission, scale, and hiring story."
+        companyData.description ||
+        "Add a strong company overview to help candidates understand your mission, scale, and hiring story."
     );
 
     setText("orgIndustry", industry);
@@ -157,103 +191,143 @@ function renderAccountInfoSection() {
     setText("accountRegisteredEmail", companyData.email || "Not available");
 }
 
-function applyMediaState(element, imageUrl, fallbackText) {
-    if (!element) return;
+// ---------------------------------------------------------------------------
+// Modal population — always pre-fills from current companyData (server-synced)
+// ---------------------------------------------------------------------------
 
-    element.classList.remove("has-photo");
-    element.style.backgroundImage = "";
-    element.textContent = fallbackText;
-
-    if (imageUrl) {
-        element.classList.add("has-photo");
-        element.style.backgroundImage = `url("${imageUrl}")`;
-    }
-}
-
-function setText(elementId, value) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.textContent = value || "-";
-    }
-}
-
-function setWebsiteText(elementId, label, href) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-
-    if (!href) {
-        element.textContent = label;
+function populateModal(id) {
+    if (id === "detailsModal") {
+        document.getElementById("inpCompanyName").value = companyData.name || "";
+        document.getElementById("inpIndustry").value = companyData.industry || "";
+        document.getElementById("inpLocation").value = companyData.location || "";
+        document.getElementById("inpWebsite").value = companyData.website || "";
+        document.getElementById("inpSize").value = companyData.size || "";
         return;
     }
 
-    element.innerHTML = `<a href="${escapeAttribute(href)}" target="_blank" rel="noopener noreferrer" class="text-link">${escapeHtml(label)}</a>`;
-}
-
-function isProfilePopupOpen() {
-    const profilePopup = document.getElementById("profilePopup");
-    return Boolean(profilePopup && !profilePopup.hidden);
-}
-
-function openProfilePopup() {
-    const profilePopup = document.getElementById("profilePopup");
-    const profileMenuButton = document.getElementById("profileMenuButton");
-    const logoutButton = document.getElementById("logoutBtn");
-
-    if (!profilePopup || !profileMenuButton) {
+    if (id === "overviewModal") {
+        document.getElementById("inpOverview").value = companyData.description || "";
         return;
     }
-
-    lastProfileMenuFocusedElement = profileMenuButton;
-    profilePopup.hidden = false;
-    profilePopup.classList.add("open");
-    profileMenuButton.setAttribute("aria-expanded", "true");
-
-    window.requestAnimationFrame(() => {
-        logoutButton?.focus();
-    });
 }
 
-function closeProfilePopup() {
-    const profilePopup = document.getElementById("profilePopup");
-    const profileMenuButton = document.getElementById("profileMenuButton");
+// ---------------------------------------------------------------------------
+// Submit handlers
+// ---------------------------------------------------------------------------
 
-    if (!profilePopup || !profileMenuButton || profilePopup.hidden) {
-        return;
+async function submitCompanyDetails(event) {
+    event.preventDefault();
+
+    const payload = {
+        name: document.getElementById("inpCompanyName").value.trim() || companyData.name,
+        industry: document.getElementById("inpIndustry").value,
+        location: document.getElementById("inpLocation").value.trim(),
+        website: document.getElementById("inpWebsite").value.trim(),
+        size: document.getElementById("inpSize").value
+    };
+
+    try {
+        const result = await apiFetch("/companies/update-details", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        // Merge updated fields from server response back into local state
+        const s = result.data;
+        companyData = {
+            ...companyData,
+            name: s.name || companyData.name,
+            industry: s.industry || companyData.industry,
+            location: s.location || companyData.location,
+            website: s.website !== undefined ? s.website : companyData.website,
+            size: s.size || companyData.size
+        };
+
+        saveAndRender("detailsModal");
+    } catch (error) {
+        console.error("Failed to update company details:", error.message);
+        alert(`Could not save details: ${error.message}`);
     }
+}
 
-    profilePopup.hidden = true;
-    profilePopup.classList.remove("open");
-    profileMenuButton.setAttribute("aria-expanded", "false");
+async function submitOverview(event) {
+    event.preventDefault();
 
-    if (lastProfileMenuFocusedElement && typeof lastProfileMenuFocusedElement.focus === "function") {
-        lastProfileMenuFocusedElement.focus();
+    const description = document.getElementById("inpOverview").value.trim();
+
+    try {
+        const result = await apiFetch("/companies/update-details", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ description })
+        });
+
+        const s = result.data;
+        companyData = {
+            ...companyData,
+            description: s.description !== undefined ? s.description : companyData.description
+        };
+
+        saveAndRender("overviewModal");
+    } catch (error) {
+        console.error("Failed to update overview:", error.message);
+        alert(`Could not save overview: ${error.message}`);
     }
 }
 
-function toggleProfilePopup() {
-    if (isProfilePopupOpen()) {
-        closeProfilePopup();
-        return;
+async function handleLogoUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("logo", file);
+
+    try {
+        const result = await apiFetch("/companies/upload-logo", {
+            method: "POST",
+            body: formData
+            // Do NOT set Content-Type — browser sets multipart boundary automatically
+        });
+
+        companyData = {
+            ...companyData,
+            logoDataUrl: result.data?.logoUrl || companyData.logoDataUrl
+        };
+        persistCompanyData();
+        renderUI();
+    } catch (error) {
+        console.error("Logo upload failed:", error.message);
+        alert(`Logo upload failed: ${error.message}`);
+    } finally {
+        event.target.value = "";
     }
-
-    openProfilePopup();
 }
 
-function setProfileAvatar(element, imageUrl, fallbackText) {
-    if (!element) return;
-
-    element.src = imageUrl || createInitialsAvatarDataUrl(fallbackText);
-    element.alt = companyData.name ? `${companyData.name} logo` : "Company Logo";
+async function logoutCompany() {
+    closeProfilePopup();
+    localStorage.removeItem(COMPANY_STORAGE_KEY);
+    companyData = createDefaultCompanyData();
+    renderUI();
+    // window.location.href = "/login";
 }
 
-function createInitialsAvatarDataUrl(text) {
-    const initials = escapeHtml((text || "TC").slice(0, 2));
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" rx="40" fill="#eef3ff"/><text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" fill="#2e5bff">${initials}</text></svg>`;
-    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+// ---------------------------------------------------------------------------
+// Shared save helper
+// ---------------------------------------------------------------------------
+
+function saveAndRender(modalId) {
+    persistCompanyData();
+    renderUI();
+    closeModal(modalId);
 }
+
+// ---------------------------------------------------------------------------
+// Modal helpers
+// ---------------------------------------------------------------------------
 
 function openModal(id) {
-    populateModal(id);
+    populateModal(id);   // always fills form fields with latest companyData before showing
     document.body.classList.add("modal-open");
 
     const modal = document.getElementById(id);
@@ -276,96 +350,111 @@ function closeModal(id) {
 
 function syncBodyScrollState() {
     const hasOpenLayer = document.querySelector(".modal-overlay.open");
-
     document.body.classList.toggle("modal-open", Boolean(hasOpenLayer));
 }
 
-function populateModal(id) {
-    if (id === "detailsModal") {
-        document.getElementById("inpCompanyName").value = companyData.name || "";
-        document.getElementById("inpIndustry").value = companyData.industry || "";
-        document.getElementById("inpLocation").value = companyData.location || "";
-        document.getElementById("inpWebsite").value = companyData.website || "";
-        document.getElementById("inpSize").value = companyData.size || "";
+// ---------------------------------------------------------------------------
+// Profile popup helpers
+// ---------------------------------------------------------------------------
+
+function isProfilePopupOpen() {
+    const profilePopup = document.getElementById("profilePopup");
+    return Boolean(profilePopup && !profilePopup.hidden);
+}
+
+function openProfilePopup() {
+    const profilePopup = document.getElementById("profilePopup");
+    const profileMenuButton = document.getElementById("profileMenuButton");
+    const logoutButton = document.getElementById("logoutBtn");
+
+    if (!profilePopup || !profileMenuButton) return;
+
+    lastProfileMenuFocusedElement = profileMenuButton;
+    profilePopup.hidden = false;
+    profilePopup.classList.add("open");
+    profileMenuButton.setAttribute("aria-expanded", "true");
+
+    window.requestAnimationFrame(() => {
+        logoutButton?.focus();
+    });
+}
+
+function closeProfilePopup() {
+    const profilePopup = document.getElementById("profilePopup");
+    const profileMenuButton = document.getElementById("profileMenuButton");
+
+    if (!profilePopup || !profileMenuButton || profilePopup.hidden) return;
+
+    profilePopup.hidden = true;
+    profilePopup.classList.remove("open");
+    profileMenuButton.setAttribute("aria-expanded", "false");
+
+    if (lastProfileMenuFocusedElement && typeof lastProfileMenuFocusedElement.focus === "function") {
+        lastProfileMenuFocusedElement.focus();
+    }
+}
+
+function toggleProfilePopup() {
+    if (isProfilePopupOpen()) {
+        closeProfilePopup();
+        return;
+    }
+    openProfilePopup();
+}
+
+// ---------------------------------------------------------------------------
+// DOM / avatar utilities
+// ---------------------------------------------------------------------------
+
+function applyMediaState(element, imageUrl, fallbackText) {
+    if (!element) return;
+
+    element.classList.remove("has-photo");
+    element.style.backgroundImage = "";
+    element.textContent = fallbackText;
+
+    if (imageUrl) {
+        element.classList.add("has-photo");
+        element.style.backgroundImage = `url("${imageUrl}")`;
+    }
+}
+
+function setText(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) element.textContent = value || "-";
+}
+
+function setWebsiteText(elementId, label, href) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    if (!href) {
+        element.textContent = label;
         return;
     }
 
-    if (id === "overviewModal") {
-        document.getElementById("inpOverview").value = companyData.description || "";
-        return;
-    }
-
+    element.innerHTML = `<a href="${escapeAttribute(href)}" target="_blank" rel="noopener noreferrer" class="text-link">${escapeHtml(label)}</a>`;
 }
 
-function submitCompanyDetails(event) {
-    event.preventDefault();
+function setProfileAvatar(element, imageUrl, fallbackText) {
+    if (!element) return;
 
-    companyData = {
-        ...companyData,
-        name: document.getElementById("inpCompanyName").value.trim() || companyData.name,
-        industry: document.getElementById("inpIndustry").value,
-        location: document.getElementById("inpLocation").value.trim(),
-        website: document.getElementById("inpWebsite").value.trim(),
-        size: document.getElementById("inpSize").value
-    };
-
-    saveAndRender("detailsModal");
+    element.src = imageUrl || createInitialsAvatarDataUrl(fallbackText);
+    element.alt = companyData.name ? `${companyData.name} logo` : "Company Logo";
 }
 
-function submitOverview(event) {
-    event.preventDefault();
-
-    companyData = {
-        ...companyData,
-        description: document.getElementById("inpOverview").value.trim()
-    };
-
-    saveAndRender("overviewModal");
+function createInitialsAvatarDataUrl(text) {
+    const initials = escapeHtml((text || "TC").slice(0, 2));
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" rx="40" fill="#eef3ff"/><text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" fill="#2e5bff">${initials}</text></svg>`;
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
-function saveAndRender(modalId) {
-    persistCompanyData();
-    renderUI();
-    closeModal(modalId);
-}
-
-function handleLogoUpload(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-        companyData = {
-            ...companyData,
-            logoDataUrl: reader.result
-        };
-        persistCompanyData();
-        renderUI();
-    };
-
-    reader.onerror = () => {
-        alert("Failed to read the selected logo");
-    };
-
-    reader.readAsDataURL(file);
-    event.target.value = "";
-}
-
-function logoutCompany() {
-    closeProfilePopup();
-    localStorage.removeItem(COMPANY_STORAGE_KEY);
-    companyData = createDefaultCompanyData();
-    renderUI();
-}
+// ---------------------------------------------------------------------------
+// String / date utilities
+// ---------------------------------------------------------------------------
 
 function getInitials(name = "") {
-    const parts = name
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2);
-
+    const parts = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
     if (!parts.length) return "NC";
     return parts.map((part) => part[0]).join("").toUpperCase();
 }
@@ -377,11 +466,8 @@ function normalizeWebsite(value) {
 
 function formatAccountCreatedDate(value) {
     if (!value) return "Not available";
-
     const parsedDate = new Date(value);
-    if (Number.isNaN(parsedDate.getTime())) {
-        return "Not available";
-    }
+    if (Number.isNaN(parsedDate.getTime())) return "Not available";
 
     return new Intl.DateTimeFormat("en-IN", {
         day: "numeric",

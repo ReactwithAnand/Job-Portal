@@ -3,6 +3,20 @@ import { API_BASE_URL as API_URL } from "../../constants/constant.js";
 const API_BASE_URL = `${API_URL}/users`;
 const PROGRESS_RING_START_ANGLE = 225;
 
+(async () => {
+    try {
+        const authRes = await fetch(`${API_BASE_URL}/current`, {
+            method: "GET",
+            credentials: "include"
+        });
+
+        if (!authRes.ok) {
+            window.location.href = "../authentication/login/login.html";
+        }
+    } catch (err) {
+        console.error(err);
+    }
+})();
 
 let userData = JSON.parse(localStorage.getItem("userData") || "{}");
 let tempTags = { skills: [], tech: [], langs: [], achieve: [] };
@@ -253,11 +267,37 @@ function renderUI() {
         : '<span class="empty-value">Not added yet</span>';
     document.getElementById("languagesList").innerHTML = (userData.languages || []).map(l => `<span class="lang-pill">${l}</span>`).join("");
 
+    const profileAvatar = document.getElementById("profileAvatar");
+    const headerProfileAvatar = document.getElementById("headerProfileAvatar");
+    const drawerAvatarInner = document.querySelector(".profile-avatar-inner");
+    const drawerAvatarHead = document.querySelector(".profile-avatar-head");
+    const drawerAvatarBody = document.querySelector(".profile-avatar-body");
+
     if (userData.profilePicture?.url) {
-        document.getElementById("profileAvatar").style.backgroundImage = `url(${userData.profilePicture.url})`;
-        document.getElementById("profileAvatar").classList.add("has-photo");
-        document.getElementById("headerProfileAvatar").style.backgroundImage = `url(${userData.profilePicture.url})`;
-        document.getElementById("headerProfileAvatar").classList.add("has-photo");
+        profileAvatar.style.backgroundImage = `url(${userData.profilePicture.url})`;
+        profileAvatar.classList.add("has-photo");
+
+        headerProfileAvatar.style.backgroundImage = `url(${userData.profilePicture.url})`;
+        headerProfileAvatar.classList.add("has-photo");
+
+        if (drawerAvatarInner) {
+            drawerAvatarInner.style.backgroundImage = `url(${userData.profilePicture.url})`;
+            drawerAvatarInner.style.backgroundPosition = "center";
+            drawerAvatarInner.style.backgroundRepeat = "no-repeat";
+            drawerAvatarInner.style.backgroundSize = "cover";
+        }
+        if (drawerAvatarHead) drawerAvatarHead.style.display = "none";
+        if (drawerAvatarBody) drawerAvatarBody.style.display = "none";
+    } else {
+        profileAvatar.style.backgroundImage = "";
+        profileAvatar.classList.remove("has-photo");
+
+        headerProfileAvatar.style.backgroundImage = "";
+        headerProfileAvatar.classList.remove("has-photo");
+
+        if (drawerAvatarInner) drawerAvatarInner.style.backgroundImage = "";
+        if (drawerAvatarHead) drawerAvatarHead.style.display = "";
+        if (drawerAvatarBody) drawerAvatarBody.style.display = "";
     }
 
     const rDisp = document.getElementById("resumeDisplay");
@@ -837,7 +877,7 @@ logoutBtn.addEventListener("click", async () => {
         } else {
             alert(json.message || "Failed to logout");
         }
-    } catch (err) { 
-        alert(err.message); 
+    } catch (err) {
+        alert(err.message);
     }
 });

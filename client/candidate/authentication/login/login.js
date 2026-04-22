@@ -2,28 +2,53 @@ import { API_BASE_URL } from "../../../constants/constant.js";
 
 const BASE_URL = `${API_BASE_URL}/users`;
 
-/**
- * Navigation function to switch between pages
- */
+async function redirectBasedOnProfile() {
+  const profileRes = await fetch(`${API_BASE_URL}/users/profile-completion`, {
+    method: "GET",
+    credentials: "include"
+  });
+
+  const profileData = await profileRes.json();
+  const percentage = profileData?.data?.profileCompletePercentage ?? profileData?.profileCompletePercentage;
+
+  if (percentage >= 50) {
+    window.location.href = "../../../index.html";
+  } else {
+    window.location.href = "../../profile/profile.html";
+  }
+}
+
 function navigate(fromId, toId) {
   const fromPage = document.getElementById(fromId);
   const toPage = document.getElementById(toId);
-  
+
   if (fromPage && toPage) {
     fromPage.classList.remove('active');
     toPage.classList.add('active');
   }
 }
 
-// Global data object for registration
 let registerData = {};
 
-/**
- * Initializing Event Listeners after DOM is ready
- */
 document.addEventListener("DOMContentLoaded", () => {
-  
-  // --- PAGE 1: LOGIN PAGE ---
+
+  //check is user is already logged in
+  (async () => {
+    try {
+      const authRes = await fetch(`${API_BASE_URL}/users/current`, {
+        method: "GET",
+        credentials: "include"
+      });
+
+      if (authRes.ok) {
+        await redirectBasedOnProfile();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  })();
+
+  //login logic
   const loginBtn = document.getElementById("btn-login-submit");
   const goToRegisterBtn = document.getElementById("btn-go-to-register");
 
@@ -53,8 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         alert("Login successful ✅");
-        console.log(data);
-        window.location.href = "../../profile/profile.html";
+        await redirectBasedOnProfile();
       } catch (err) {
         console.error(err);
         alert("Something went wrong");
@@ -62,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- PAGE 2: REGISTRATION (Name/Email) ---
+  //registration logic (name/email)
   const page2Next = document.getElementById("btn-register-step1-next");
   const backToLogin = document.getElementById("btn-back-to-login");
 
@@ -79,7 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- PAGE 3: REGISTRATION (DOB/Gender) ---
+  // registration logic (DOB/Gender)
   const page3Next = document.getElementById("btn-register-step2-next");
   const backToRegister1 = document.getElementById("btn-back-to-register-step1");
 
@@ -101,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- PAGE 4: REGISTRATION (Password) ---
+  // registration logic (password)
   const page4Submit = document.getElementById("btn-register-final-submit");
   const backToRegister2 = document.getElementById("btn-back-to-register-step2");
   const toggleCheckbox = document.getElementById("toggle-password-checkbox");

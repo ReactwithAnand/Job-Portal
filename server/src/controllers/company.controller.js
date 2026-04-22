@@ -151,28 +151,42 @@ const updateCompanyDetails = asyncHandler(async (req, res) => {
     if (!companyId) {
         throw new ApiError(401, "Unauthorized");
     }
-    if(!name && !description && !location && !website && !industry && !size) {
-        throw new ApiError(400, "At least one field is required to update")
-    }
-    if(industry && !["Technology", "Finance", "Healthcare", "Education", "Retail", "Other"].includes(industry)) {
-        throw new ApiError(400, "Invalid industry value")
-    }
-    if(size && !["1-10", "11-50", "51-200", "201-500", "501-1000", "1001+"].includes(size)) {
-        throw new ApiError(400, "Invalid size value")
-    }
-
-    const company = await Company.findByIdAndUpdate(companyId, {
-        name,
-        description,
-        location,
-        website,
-        industry,
-        size
-    }, { returnDocument: 'after', runValidators: true }).select("-password -refreshToken");
-
+    const company = await Company.findById(companyId);
     if (!company) {
         throw new ApiError(404, "Company not found");
     }
+
+    if(name){
+        company.name = name;
+    }
+
+    if(description){
+        company.description = description;
+    }
+
+    if(location){
+        company.location = location;
+    }
+
+    if(website){
+        company.website = website;
+    }
+
+    if(industry){
+        if(!["Technology", "Finance", "Healthcare", "Education", "Retail", "Other"].includes(industry)){
+            throw new ApiError(400, "Invalid industry value")
+        }
+        company.industry = industry;
+    }
+
+    if(size){
+        if(!["1-10", "11-50", "51-200", "201-500", "501-1000", "1001+"].includes(size)){
+            throw new ApiError(400, "Invalid size value")
+        }
+        company.size = size;
+    }
+
+    await company.save();
 
     return res
         .status(200)

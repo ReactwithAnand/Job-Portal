@@ -113,6 +113,8 @@ const getAllJobsByAlgorithm = asyncHandler(async (req, res) => {
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    thirtyDaysAgo.setHours(0, 0, 0, 0);
+
     const today = new Date();
 
     const jobs = await Job.aggregate([
@@ -158,6 +160,31 @@ const getAllJobsByAlgorithm = asyncHandler(async (req, res) => {
     if (!jobs.length) {
         return res.status(200).json(
             new ApiResponse(200, [], "No jobs available at the moment")
+        );
+    }
+
+    //for new user
+    const isNewUser =
+        !user.skills?.length &&
+        !user.qualifications?.length &&
+        !user.experiences?.length &&
+        !user.projects?.length &&
+        !user.address?.city;
+
+    if (isNewUser) {
+        const sortedByDate = [...jobs].sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+        const rankedJobs = sortedByDate.map((job, index) => ({
+            rank: index + 1,
+            matchScore: 0,
+            ...job
+        }));
+        return res.status(200).json(
+            new ApiResponse(200, {
+                totalJobs: rankedJobs.length,
+                jobs: rankedJobs
+            }, "Jobs fetched and ranked successfully")
         );
     }
 

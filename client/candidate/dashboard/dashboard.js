@@ -14,22 +14,33 @@ const icons = {
     pending: '<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 15 15"></polyline></svg>'
 };
 
-let currentUser = null;       
-let myApplications = [];      
-async function apiFetch(url, options = {}) {
-    const res = await fetch(url, {
-        credentials: 'include', 
-        headers: { 'Content-Type': 'application/json', ...options.headers },
-        ...options
+(async () => {
+    try {
+        const authRes = await fetch(`${API_BASE_URL}/users/current`, {
+            method: "GET",
+            credentials: "include"
+        });
+
+        if (!authRes.ok) {
+            window.location.href = "../authentication/login/login.html";
+        }
+    } catch (err) {
+        console.error(err);
+    }
+})();
+
+let currentUser = null;
+let myApplications = [];
+
+async function fetchMyApplications() {
+    const res = await fetch(`${API_BASE_URL}/applyed-jobs/my-applications`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
-    return data;
-}
-
-async function fetchMyApplications() {
-    const response = await apiFetch(`${API_BASE_URL}/applyed-jobs/my-applications`);
-    return response.data;
+    return data.data;
 }
 
 function normaliseApplication(app) {
@@ -39,11 +50,11 @@ function normaliseApplication(app) {
         : null;
 
     return {
-        _id:       app._id,
-        status:    app.status,
+        _id: app._id,
+        status: app.status,
         createdAt: new Date(app.createdAt),
-        job:       job     || null,
-        company:   company || null
+        job: job || null,
+        company: company || null
     };
 }
 
@@ -51,10 +62,30 @@ async function initDashboard() {
     bindDrawerEvents();
 
     try {
+        // fetch current user
+        const userRes = await fetch(`${API_BASE_URL}/users/current`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const userData = await userRes.json();
+        if (!userRes.ok) throw new Error(userData.message || `HTTP ${userRes.status}`);
+
+        // fetch profile completion percentage
+        const completionRes = await fetch(`${API_BASE_URL}/users/profile-completion`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const completionData = await completionRes.json();
+        if (!completionRes.ok) throw new Error(completionData.message || `HTTP ${completionRes.status}`);
+
+        // fetch applications
         const rawApps = await fetchMyApplications();
         myApplications = rawApps.map(normaliseApplication);
 
-        currentUser = null;
+        // attach completion onto user object
+        currentUser = { ...userData.data, profileCompletePercentage: completionData.data.profileCompletePercentage };
 
         renderApplicantProfile();
         updateStatistics();
@@ -70,19 +101,19 @@ async function initDashboard() {
 function renderApplicantProfile() {
     const user = currentUser;
 
-    const headerAvatar    = document.getElementById('headerProfileAvatar');
-    const drawerName      = document.getElementById('drawerProfileName');
-    const drawerSubtitle  = document.getElementById('drawerProfileSubtitle');
+    const headerAvatar = document.getElementById('headerProfileAvatar');
+    const drawerName = document.getElementById('drawerProfileName');
+    const drawerSubtitle = document.getElementById('drawerProfileSubtitle');
     const drawerPercentage = document.getElementById('drawerPercentage');
-    const drawerRing      = document.getElementById('drawerRing');
+    const drawerRing = document.getElementById('drawerRing');
     const drawerAvatarInner = document.querySelector('.profile-avatar-inner');
     const performanceValues = document.querySelectorAll('.performance-value');
 
-    if (!user) return; 
+    if (!user) return;
 
     const topQualification = user.qualifications?.[0];
-    const completion       = user.profileCompletePercentage || 0;
-    const completionColor  = getCompletionColor(completion);
+    const completion = user.profileCompletePercentage || 0;
+    const completionColor = getCompletionColor(completion);
 
     if (headerAvatar && user.profilePicture?.url) {
         headerAvatar.style.backgroundImage = `url("${user.profilePicture.url}")`;
@@ -118,7 +149,7 @@ function renderApplicantProfile() {
 
     if (performanceValues.length >= 2) {
         performanceValues[0].textContent = user.searchAppearances || 0;
-        performanceValues[1].textContent = user.recruiterActions  || 0;
+        performanceValues[1].textContent = user.recruiterActions || 0;
     }
 }
 
@@ -132,10 +163,10 @@ function getCompletionColor(percentage) {
 
 function updateStatistics() {
     const totalApplied = myApplications.length;
-    const shortlisted  = myApplications.filter(a => a.status === 'Shortlisted').length;
-    const rejected     = myApplications.filter(a => a.status === 'Rejected').length;
+    const shortlisted = myApplications.filter(a => a.status === 'Shortlisted').length;
+    const rejected = myApplications.filter(a => a.status === 'Rejected').length;
 
-    document.getElementById('stat-applied').innerText  = totalApplied;
+    document.getElementById('stat-applied').innerText = totalApplied;
     document.getElementById('stat-selected').innerText = shortlisted;
     document.getElementById('stat-rejected').innerText = rejected;
 }
@@ -168,14 +199,14 @@ function renderApplicationList() {
     const sorted = [...myApplications].sort((a, b) => b.createdAt - a.createdAt);
 
     sorted.forEach(application => {
-        const job     = application.job;
+        const job = application.job;
         const company = application.company;
 
         if (!job) return;
 
         let statusIcon = icons.pending;
         if (application.status === 'Shortlisted') statusIcon = icons.check;
-        if (application.status === 'Rejected')    statusIcon = icons.x;
+        if (application.status === 'Rejected') statusIcon = icons.x;
 
         const companyLogo = company?.logo?.url || company?.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(company?.name || 'Co')}&background=random&size=48`;
         const companyName = company?.name || 'Company';
@@ -271,21 +302,21 @@ function renderApplicationList() {
 }
 
 function bindDrawerEvents() {
-    const profileButton       = document.querySelector('.profile-menu');
-    const notificationButton  = document.querySelector('.icon-button');
-    const profileOverlay      = document.getElementById('profileDrawerOverlay');
+    const profileButton = document.querySelector('.profile-menu');
+    const notificationButton = document.querySelector('.icon-button');
+    const profileOverlay = document.getElementById('profileDrawerOverlay');
     const notificationsOverlay = document.getElementById('notificationsOverlay');
-    const profileClose        = document.querySelector('.drawer-close');
-    const notificationsClose  = document.querySelector('.notifications-close');
-    const notificationsCta    = document.querySelector('.notifications-cta');
-    const profileLink         = document.querySelector('.profile-link');
-    const logoutButton        = document.getElementById('logoutBtn');
+    const profileClose = document.querySelector('.drawer-close');
+    const notificationsClose = document.querySelector('.notifications-close');
+    const notificationsCta = document.querySelector('.notifications-cta');
+    const profileLink = document.querySelector('.profile-link');
+    const logoutButton = document.getElementById('logoutBtn');
 
-    profileButton?.addEventListener('click',      () => openDrawer(profileOverlay));
+    profileButton?.addEventListener('click', () => openDrawer(profileOverlay));
     notificationButton?.addEventListener('click', () => openDrawer(notificationsOverlay));
-    profileClose?.addEventListener('click',       () => closeDrawer(profileOverlay));
+    profileClose?.addEventListener('click', () => closeDrawer(profileOverlay));
     notificationsClose?.addEventListener('click', () => closeDrawer(notificationsOverlay));
-    notificationsCta?.addEventListener('click',   () => closeDrawer(notificationsOverlay));
+    notificationsCta?.addEventListener('click', () => closeDrawer(notificationsOverlay));
 
     profileOverlay?.addEventListener('click', event => {
         if (event.target === profileOverlay) closeDrawer(profileOverlay);
@@ -306,9 +337,24 @@ function bindDrawerEvents() {
         window.location.href = '../profile/profile.html';
     });
 
-    logoutButton?.addEventListener('click', () => {
-        localStorage.removeItem('userData');
-        window.location.href = '../authentication/login/login.html';
+    // logout
+    logoutButton?.addEventListener('click', async () => {
+        try {
+            const res = await fetch(`${API_BASE_URL}/users/logout`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                console.warn('Logout API error:', data.message);
+            }
+        } catch (err) {
+            console.warn('Logout request failed (proceeding anyway):', err.message);
+        } finally {
+            localStorage.removeItem('userData');
+            window.location.href = '../authentication/login/login.html';
+        }
     });
 }
 
