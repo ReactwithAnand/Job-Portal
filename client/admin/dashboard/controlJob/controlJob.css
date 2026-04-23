@@ -630,7 +630,7 @@
         .site-footer {
             background-color: var(--bg-surface);
             border-top: 1px solid var(--border);
-            margin-top: auto;
+            margin-top: 1rem;
         }
 
         .footer-inner {
