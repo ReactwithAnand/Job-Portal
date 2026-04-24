@@ -157,7 +157,7 @@ function renderJobCard(job) {
                 <span>Posted: ${postedLabel}</span>
             </div>
             <div class="job-header-top">
-                <img src="${job.logo}" alt="${job.company} logo" class="company-logo">
+                <img src="${job?.logo?.url}" alt="${job.company} logo" class="company-logo">
                 <div class="job-title-group">
                     <h3 class="job-title">${job.title}</h3>
                     <div class="company-name">${job.company}</div>
