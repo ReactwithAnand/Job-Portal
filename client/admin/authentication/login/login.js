@@ -89,7 +89,7 @@ document.getElementById("signin-btn").addEventListener("click", async () => {
 
     // Login successful — redirect or handle as needed
     console.log("Logged in:", data);
-    window.location.href = "../../profile/profile.html"; // change to your actual redirect path
+    window.location.href = "../../dashboard/controlJob/controlJob.html"; // change to your actual redirect path
 
   } catch (err) {
     showError("signin-error", "Network error. Please try again.");
