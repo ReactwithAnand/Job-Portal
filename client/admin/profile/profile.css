@@ -78,11 +78,11 @@
  }
 
  .navbar {
-     height: 55px;
+     min-height: 68px;
      display: flex;
      align-items: center;
      justify-content: space-between;
-     padding: 1rem 5%;
+     padding: 0.75rem 5%;
      border-bottom: 1px solid var(--border);
      background: var(--surface);
      position: sticky;
@@ -119,10 +119,29 @@
      font-weight: 500;
  }
 
+ .navbar-links {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    color: #0666eb;
+}
  .profile-menu {
-     padding: 0;
-     border: 0;
-     background: transparent;
+     display: inline-flex;
+     align-items: center;
+     gap: 12px;
+     min-height: 48px;
+     padding: 8px 14px;
+     border: 1px solid var(--border);
+     border-radius: var(--radius-pill);
+     background: var(--surface);
+     box-shadow: 0 10px 24px rgba(23, 35, 71, 0.04);
+     transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+ }
+
+ .profile-menu:hover {
+     border-color: #d7deef;
+     box-shadow: 0 12px 30px rgba(23, 35, 71, 0.08);
+     transform: translateY(-1px);
  }
 
  .profile-menu:focus-visible {
@@ -131,56 +150,44 @@
      border-radius: 999px;
  }
 
+ .menu-lines {
+     position: relative;
+     width: 20px;
+     height: 14px;
+     flex: 0 0 auto;
+ }
+
+ .menu-lines::before,
+ .menu-lines::after,
+ .menu-lines span {
+     content: "";
+     position: absolute;
+     left: 0;
+     right: 0;
+     height: 2px;
+     border-radius: 999px;
+     background: #93a0ba;
+ }
+
+ .menu-lines::before {
+     top: 0;
+ }
+
+ .menu-lines span {
+     top: 6px;
+ }
+
+ .menu-lines::after {
+     bottom: 0;
+ }
+
  .profile-menu img {
-     width: 40px;
-     height: 40px;
+     width: 32px;
+     height: 32px;
      border: 2px solid var(--border);
      border-radius: 50%;
      object-fit: cover;
      background: #eef3ff;
- }
-
- .profile-popup {
-     position: absolute;
-     top: calc(100% + 10px);
-     right: 0;
-     z-index: 80;
-     width: 200px;
-     padding: 18px 18px 16px;
-     border: 1px solid #e4e7ef;
-     border-radius: 14px;
-     background: #fff;
-     box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
- }
-
- .profile-popup.open {
-     display: block;
- }
-
- .profile-popup-title {
-     margin: 0 0 14px;
-     color: #1f2937;
-     font-size: 0.98rem;
-     font-weight: 600;
-     text-align: center;
- }
-
- .profile-popup-button {
-     width: 100%;
-     min-height: 44px;
-     border: 0;
-     border-radius: 8px;
-     background: #0666EB;
-     color: #f3f4f6;
-     font-size: 0.95rem;
-     font-weight: 600;
-     transition: background 0.18s ease, color 0.18s ease;
- }
-
- .profile-popup-button:hover,
- .profile-popup-button:focus-visible {
-     background: #0555c4;
-     color: #e5e7eb;
  }
 
  .brand {
@@ -229,7 +236,7 @@
 
  .company-summary {
      display: grid;
-     grid-template-columns: 220px minmax(0, 1fr) 292px;
+     grid-template-columns: 220px minmax(0, 1fr);
      gap: 24px;
      align-items: stretch;
      padding: 24px;
@@ -240,8 +247,6 @@
  }
 
  .company-logo-panel {
-     position: relative;
-     left: 40px;
      display: flex;
      align-items: center;
      justify-content: center;
@@ -250,12 +255,12 @@
  .company-logo-trigger {
      position: relative;
      width: 100%;
-     max-width: 196px;
+     max-width: 220px;
  }
 
  .company-logo-frame {
-     min-height: 250px;
-     min-width: 250px;
+     min-height: 220px;
+     width: 220px;
      display: grid;
      place-items: center;
      border: 1px solid var(--border);
@@ -278,7 +283,7 @@
 
  .company-logo-edit {
      position: absolute;
-     left: 200px;
+     right: 12px;
      bottom: 12px;
      width: 36px;
      height: 36px;
@@ -304,8 +309,6 @@
  }
 
  .company-main {
-     position: relative;
-     left: 200px;
      display: grid;
      align-content: center;
      gap: 22px;
@@ -388,6 +391,88 @@
      display: grid;
      gap: 16px;
      margin-top: 24px;
+ }
+
+ .section-intro {
+     margin-bottom: 18px;
+ }
+
+ .info-pill-grid {
+     display: grid;
+     grid-template-columns: repeat(2, minmax(0, 1fr));
+     gap: 14px;
+     margin-bottom: 18px;
+ }
+
+ .info-pill-card {
+     padding: 16px 18px;
+     border: 1px solid var(--border);
+     border-radius: 16px;
+     background: #fbfcff;
+ }
+
+ .info-pill-card p {
+     margin: 8px 0 0;
+     color: #223053;
+     font-size: 0.96rem;
+     font-weight: 600;
+     line-height: 1.5;
+ }
+
+ .detail-block + .detail-block {
+     margin-top: 18px;
+ }
+
+ .detail-block h4,
+ .faq-item h4 {
+     margin: 0 0 10px;
+     color: #1e2640;
+     font-size: 0.92rem;
+     font-weight: 700;
+ }
+
+ .chip-cloud {
+     display: flex;
+     flex-wrap: wrap;
+     gap: 10px;
+ }
+
+ .chip-cloud .tag,
+ .empty-chip {
+     display: inline-flex;
+     align-items: center;
+     min-height: 36px;
+     padding: 0 14px;
+     border: 1px solid #dbe3f2;
+     border-radius: var(--radius-pill);
+     background: #fbfcff;
+     color: #40537f;
+     font-size: 0.84rem;
+     font-weight: 600;
+ }
+
+ .empty-chip {
+     color: var(--text-muted);
+     font-weight: 500;
+ }
+
+ .faq-list {
+     display: grid;
+     gap: 14px;
+ }
+
+ .faq-item {
+     padding: 18px;
+     border: 1px solid var(--border);
+     border-radius: 16px;
+     background: #fbfcff;
+ }
+
+ .faq-item p {
+     margin: 0;
+     color: #4a5779;
+     font-size: 0.94rem;
+     line-height: 1.65;
  }
 
  .content-card {
@@ -534,6 +619,236 @@
      font-size: 0.82rem;
  }
 
+ .company-overlay {
+     position: fixed;
+     inset: 0;
+     z-index: 96;
+     background: rgba(29, 38, 62, 0.42);
+     opacity: 0;
+     pointer-events: none;
+     transition: opacity 0.18s ease;
+ }
+
+ .company-overlay.open {
+     opacity: 1;
+     pointer-events: auto;
+ }
+
+ .company-sidebar {
+     position: absolute;
+     top: 0;
+     right: 0;
+     width: min(36vw, 500px);
+     min-width: 430px;
+     height: 100dvh;
+     padding: 32px 28px 34px;
+     border-radius: 34px 0 0 34px;
+     background: #fff;
+     box-shadow: -18px 0 48px rgba(25, 36, 61, 0.14);
+     transform: translateX(100%);
+     transition: transform 0.22s ease;
+     overflow-y: auto;
+ }
+
+ .company-overlay.open .company-sidebar {
+     transform: translateX(0);
+ }
+
+ .company-sidebar-close {
+     position: absolute;
+     top: 22px;
+     right: 22px;
+     width: 38px;
+     height: 38px;
+     display: grid;
+     place-items: center;
+     border-radius: 50%;
+     color: #7e8bb0;
+ }
+
+ .company-sidebar-close svg,
+ .company-menu-item svg {
+     width: 18px;
+     height: 18px;
+     stroke: currentColor;
+     stroke-width: 1.8;
+     fill: none;
+     stroke-linecap: round;
+     stroke-linejoin: round;
+ }
+
+ .company-sidebar-header {
+     display: grid;
+     grid-template-columns: auto minmax(0, 1fr);
+     gap: 20px;
+     align-items: start;
+     padding: 10px 32px 0 6px;
+ }
+
+ .company-sidebar-logo {
+     width: 104px;
+     height: 104px;
+     display: grid;
+     place-items: center;
+     border: 1px solid var(--border);
+     border-radius: 28px;
+     background: linear-gradient(145deg, #f7f9fe, #edf3ff);
+     color: #32466f;
+     font-size: 2rem;
+     font-weight: 700;
+     letter-spacing: -0.04em;
+     text-transform: uppercase;
+     overflow: hidden;
+ }
+
+ .company-sidebar-logo.has-photo {
+     color: transparent;
+     background-position: center;
+     background-repeat: no-repeat;
+     background-size: cover;
+ }
+
+ .company-sidebar-copy {
+     min-width: 0;
+     padding-top: 6px;
+ }
+
+ .company-sidebar-eyebrow {
+     margin: 0 0 8px;
+     color: #6f7e9f;
+     font-size: 0.8rem;
+     font-weight: 700;
+     text-transform: uppercase;
+     letter-spacing: 0.08em;
+ }
+
+ .company-sidebar-name {
+     margin: 0 0 8px;
+     color: #081a44;
+     font-size: 1.3rem;
+     font-weight: 700;
+     line-height: 1.2;
+ }
+
+ .company-sidebar-subtitle {
+     margin: 0 0 10px;
+     color: #384868;
+     font-size: 0.96rem;
+     font-weight: 600;
+     line-height: 1.45;
+ }
+
+ .company-sidebar-headline {
+     margin: 0 0 16px;
+     color: #687897;
+     font-size: 0.92rem;
+     line-height: 1.65;
+ }
+
+ .company-sidebar-link {
+     color: #2f63ff;
+     font-size: 0.92rem;
+     font-weight: 700;
+ }
+
+ .company-sidebar-divider {
+     height: 1px;
+     margin: 26px 8px;
+     background: #e6ebf4;
+ }
+
+ .company-sidebar-section {
+     padding: 0 8px;
+ }
+
+ .company-sidebar-section-head {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     gap: 12px;
+     margin-bottom: 16px;
+ }
+
+ .company-sidebar-section-head h3 {
+     margin: 0;
+     color: #081a44;
+     font-size: 1rem;
+     font-weight: 700;
+ }
+
+ .company-sidebar-section-head span {
+     color: #8898be;
+     font-size: 0.82rem;
+ }
+
+ .company-sidebar-facts {
+     display: grid;
+     grid-template-columns: repeat(2, minmax(0, 1fr));
+     gap: 12px;
+ }
+
+ .company-fact-card {
+     padding: 16px;
+     border-radius: 18px;
+     background: #f6f8fd;
+ }
+
+ .company-fact-card span {
+     display: block;
+     margin-bottom: 8px;
+     color: #7d8bad;
+     font-size: 0.75rem;
+     font-weight: 700;
+     text-transform: uppercase;
+     letter-spacing: 0.05em;
+ }
+
+ .company-fact-card p {
+     margin: 0;
+     color: #0e1e46;
+     font-size: 0.94rem;
+     font-weight: 600;
+     line-height: 1.45;
+ }
+
+ .company-sidebar-menu {
+     display: grid;
+     gap: 4px;
+     margin: 22px 8px 0;
+ }
+
+ .company-menu-item {
+     display: flex;
+     align-items: center;
+     gap: 14px;
+     min-height: 50px;
+     padding: 0 6px;
+     border-radius: 14px;
+     color: #101b39;
+     font-size: 0.97rem;
+     font-weight: 500;
+     transition: background-color 0.18s ease, color 0.18s ease;
+ }
+
+ .company-menu-item:hover,
+ .company-menu-item:focus-visible {
+     background: #f6f8fc;
+ }
+
+ .company-menu-item svg {
+     flex: 0 0 auto;
+     color: #6f81a8;
+ }
+
+ .company-menu-item--logout {
+     margin-top: 8px;
+     color: #d44747;
+ }
+
+ .company-menu-item--logout svg {
+     color: currentColor;
+ }
+
  .modal-overlay {
      position: fixed;
      inset: 0;
@@ -647,6 +962,50 @@
      box-shadow: 0 0 0 3px rgba(92, 126, 235, 0.12);
  }
 
+ .tag-input-container {
+     display: flex;
+     flex-wrap: wrap;
+     gap: 8px;
+     padding: 8px;
+     border: 1px solid #dce2ef;
+     border-radius: 12px;
+     min-height: 44px;
+ }
+
+ .tag-input-container input {
+     border: none;
+     outline: none;
+     flex-grow: 1;
+     min-width: 120px;
+     font-size: 0.98rem;
+     background: transparent;
+ }
+
+ .tag {
+     display: inline-flex;
+     align-items: center;
+     gap: 8px;
+     min-height: 32px;
+     padding: 0 10px 0 12px;
+     border-radius: 16px;
+     background: #eef3ff;
+     color: #2e5bff;
+     font-size: 0.84rem;
+     font-weight: 600;
+ }
+
+ .tag button {
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     width: 18px;
+     height: 18px;
+     border-radius: 50%;
+     color: inherit;
+     font-size: 0.8rem;
+     line-height: 1;
+ }
+
  .modal-actions {
      display: flex;
      align-items: center;
@@ -681,6 +1040,10 @@
      .company-summary {
          grid-template-columns: 200px minmax(0, 1fr);
      }
+
+     .company-sidebar {
+         width: min(44vw, 500px);
+     }
  }
 
  @media (max-width: 980px) {
@@ -697,7 +1060,22 @@
      }
 
      .company-meta-grid,
-     .profile-data-grid {
+     .profile-data-grid,
+     .info-pill-grid {
+         grid-template-columns: 1fr;
+     }
+
+     .company-sidebar {
+         width: min(86vw, 500px);
+         min-width: 0;
+     }
+
+     .company-sidebar-header {
+         grid-template-columns: 1fr;
+         padding-right: 44px;
+     }
+
+     .company-sidebar-facts {
          grid-template-columns: 1fr;
      }
 
@@ -712,8 +1090,8 @@
 
      .navbar {
          height: auto;
-         padding-top: 16px;
-         padding-bottom: 16px;
+         padding-top: 18px;
+         padding-bottom: 18px;
          flex-direction: column;
          align-items: flex-start;
          gap: 14px;
@@ -737,6 +1115,18 @@
          align-items: flex-start;
      }
 
+     .company-sidebar {
+         width: min(92vw, 500px);
+         padding-left: 20px;
+         padding-right: 20px;
+         border-radius: 28px 0 0 28px;
+     }
+
+     .company-sidebar-close {
+         top: 18px;
+         right: 18px;
+     }
+
      .footer-inner,
      .footer-links {
          display: grid;
@@ -747,7 +1137,7 @@
          grid-template-columns: 1fr;
      }
 
-     .profile-popup {
-         right: 0;
+     .profile-menu {
+         align-self: flex-end;
      }
  }

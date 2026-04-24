@@ -1,6 +1,7 @@
 import {API_BASE_URL} from "../../../constants/constant.js";
 
 (function () {
+    var COMPANY_STORAGE_KEY = "naukriCampusCompanyProfile";
     var currentStep = 1;
     var totalSteps = 3;
     var sections = Array.from(document.querySelectorAll(".form-section"));
@@ -13,9 +14,21 @@ import {API_BASE_URL} from "../../../constants/constant.js";
     var postAnotherJobButton = document.getElementById("postAnotherJobButton");
     var applicationDeadlineInput = document.getElementById("applicationDeadline");
     var profileMenuButton = document.getElementById("profileMenuButton");
-    var profilePopup = document.getElementById("profilePopup");
-    var logoutButton = document.getElementById("logoutButton");
+    var companyDrawerOverlay = document.getElementById("companyDrawerOverlay");
+    var companyDrawerClose = document.getElementById("companyDrawerClose");
+    var logoutButton = document.getElementById("logoutBtn");
+    var headerProfileAvatar = document.getElementById("headerProfileAvatar");
+    var drawerCompanyLogo = document.getElementById("drawerCompanyLogo");
+    var drawerCompanyName = document.getElementById("drawerCompanyName");
+    var drawerCompanySubtitle = document.getElementById("drawerCompanySubtitle");
+    var drawerCompanyHeadline = document.getElementById("drawerCompanyHeadline");
     var lastProfileMenuFocusedElement = null;
+    var companyData = loadCompanyData();
+    var tagFields = {
+        location: createTagFieldConfig("locationTagContainer", "locationInput", "location", "location-chip"),
+        skills: createTagFieldConfig("requiredSkillsTagContainer", "requiredSkillsInput", "requiredSkills", "tag-chip"),
+        qualifications: createTagFieldConfig("qualificationsTagContainer", "qualificationsInput", "qualifications", "tag-chip")
+    };
 
     function $(id) {
         return document.getElementById(id);
@@ -48,6 +61,128 @@ import {API_BASE_URL} from "../../../constants/constant.js";
         }
     }
 
+    function createTagFieldConfig(containerId, inputId, hiddenInputId, chipClassName) {
+        return {
+            container: document.getElementById(containerId),
+            input: document.getElementById(inputId),
+            hiddenInput: document.getElementById(hiddenInputId),
+            chipClassName: chipClassName,
+            values: []
+        };
+    }
+
+    function getTagFieldValues(fieldKey) {
+        var field = tagFields[fieldKey];
+        return field ? field.values.slice() : [];
+    }
+
+    function syncTagFieldValue(fieldKey) {
+        var field = tagFields[fieldKey];
+        if (field && field.hiddenInput) {
+            field.hiddenInput.value = field.values.join(", ");
+        }
+    }
+
+    function renderTagField(fieldKey) {
+        var field = tagFields[fieldKey];
+        if (!field || !field.container || !field.input) return;
+
+        Array.from(field.container.querySelectorAll(".tag-chip, .location-chip")).forEach(function (chip) {
+            chip.remove();
+        });
+
+        field.values.forEach(function (value, index) {
+            var chip = document.createElement("span");
+            chip.className = field.chipClassName;
+
+            var label = document.createElement("span");
+            label.textContent = value;
+
+            var removeButton = document.createElement("button");
+            removeButton.type = "button";
+            removeButton.className = "chip-remove-button";
+            removeButton.setAttribute("aria-label", "Remove " + value);
+            removeButton.textContent = "x";
+            removeButton.addEventListener("click", function () {
+                removeTagFieldValueAt(fieldKey, index);
+                field.input.focus();
+            });
+
+            chip.appendChild(label);
+            chip.appendChild(removeButton);
+            field.container.insertBefore(chip, field.input);
+        });
+
+        syncTagFieldValue(fieldKey);
+    }
+
+    function addTagFieldValue(fieldKey, value) {
+        var field = tagFields[fieldKey];
+        if (!field) return;
+
+        var normalizedValue = String(value || "").trim().replace(/,+$/, "");
+        if (!normalizedValue) return;
+
+        var exists = field.values.some(function (entry) {
+            return entry.toLowerCase() === normalizedValue.toLowerCase();
+        });
+
+        if (exists) {
+            if (field.input) {
+                field.input.value = "";
+                field.input.focus();
+            }
+            return;
+        }
+
+        field.values.push(normalizedValue);
+        renderTagField(fieldKey);
+        clearErrorForField(field.input);
+
+        if (field.input) {
+            field.input.value = "";
+            field.input.focus();
+        }
+    }
+
+    function removeTagFieldValueAt(fieldKey, index) {
+        var field = tagFields[fieldKey];
+        if (!field || index < 0 || index >= field.values.length) return;
+        field.values.splice(index, 1);
+        renderTagField(fieldKey);
+    }
+
+    function initializeTagField(fieldKey) {
+        var field = tagFields[fieldKey];
+        if (!field || !field.hiddenInput) return;
+
+        field.values = parseCommaSeparated(field.hiddenInput.value || "");
+        renderTagField(fieldKey);
+
+        if (!field.input) return;
+
+        field.input.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" || event.key === ",") {
+                event.preventDefault();
+                addTagFieldValue(fieldKey, field.input.value);
+                return;
+            }
+
+            if (event.key === "Backspace" && !field.input.value.trim() && field.values.length) {
+                removeTagFieldValueAt(fieldKey, field.values.length - 1);
+                clearErrorForField(field.input);
+            }
+        });
+
+        field.input.addEventListener("blur", function () {
+            addTagFieldValue(fieldKey, field.input.value);
+        });
+
+        field.input.addEventListener("input", function () {
+            clearErrorForField(field.input);
+        });
+    }
+
     function validateStep(step) {
         var isValid = true;
         var expMin, expMax, salaryMin, salaryMax;
@@ -56,15 +191,15 @@ import {API_BASE_URL} from "../../../constants/constant.js";
             if (!$("title").value.trim()) { setError("group-title"); isValid = false; }
             if (!$("jobType").value) { setError("group-jobType"); isValid = false; }
             if (!$("workMode").value) { setError("group-workMode"); isValid = false; }
-            if (!parseCommaSeparated($("location").value).length) { setError("group-location"); isValid = false; }
+            if (!getTagFieldValues("location").length) { setError("group-location"); isValid = false; }
             if (!$("vacancies").value || Number($("vacancies").value) < 1) { setError("group-vacancies"); isValid = false; }
 
         } else if (step === 2) {
             expMin = Number($("expMin").value);
             expMax = Number($("expMax").value);
             if (!$("expMin").value || !$("expMax").value || expMin > expMax) { setError("group-experience"); isValid = false; }
-            if (!parseCommaSeparated($("requiredSkills").value).length) { setError("group-skills"); isValid = false; }
-            if (!parseCommaSeparated($("qualifications").value).length) { setError("group-qualifications"); isValid = false; }
+            if (!getTagFieldValues("skills").length) { setError("group-skills"); isValid = false; }
+            if (!getTagFieldValues("qualifications").length) { setError("group-qualifications"); isValid = false; }
 
         } else if (step === 3) {
             salaryMin = Number($("salaryMin").value);
@@ -131,34 +266,94 @@ import {API_BASE_URL} from "../../../constants/constant.js";
         }, 5000);
     }
 
-    function isProfilePopupOpen() {
-        return Boolean(profilePopup && !profilePopup.hidden);
-    }
-
-    function openProfilePopup() {
-        if (!profilePopup || !profileMenuButton) return;
-        lastProfileMenuFocusedElement = profileMenuButton;
-        profilePopup.hidden = false;
-        profilePopup.classList.add("open");
-        profileMenuButton.setAttribute("aria-expanded", "true");
-        window.requestAnimationFrame(function () {
-            if (logoutButton) logoutButton.focus();
-        });
-    }
-
-    function closeProfilePopup() {
-        if (!profilePopup || !profileMenuButton || profilePopup.hidden) return;
-        profilePopup.hidden = true;
-        profilePopup.classList.remove("open");
-        profileMenuButton.setAttribute("aria-expanded", "false");
-        if (lastProfileMenuFocusedElement && typeof lastProfileMenuFocusedElement.focus === "function") {
-            lastProfileMenuFocusedElement.focus();
+    function loadCompanyData() {
+        try {
+            return JSON.parse(localStorage.getItem(COMPANY_STORAGE_KEY) || "{}");
+        } catch (error) {
+            console.error("Unable to read saved company profile", error);
+            return {};
         }
     }
 
-    function toggleProfilePopup() {
-        if (isProfilePopupOpen()) { closeProfilePopup(); return; }
-        openProfilePopup();
+    function getInitials(name) {
+        var parts = String(name || "").trim().split(/\s+/).filter(Boolean).slice(0, 2);
+        if (!parts.length) return "NC";
+        return parts.map(function (part) { return part.charAt(0); }).join("").toUpperCase();
+    }
+
+    function createInitialsAvatarDataUrl(text) {
+        var initials = (text || "NC").slice(0, 2);
+        var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" rx="40" fill="#eef3ff"/><text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" fill="#2e5bff">' + initials + "</text></svg>";
+        return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+    }
+
+    function applyMediaState(element, imageUrl, fallbackText) {
+        if (!element) return;
+        element.classList.remove("has-photo");
+        element.style.backgroundImage = "";
+        element.textContent = fallbackText;
+
+        if (imageUrl) {
+            element.classList.add("has-photo");
+            element.style.backgroundImage = 'url("' + imageUrl + '")';
+        }
+    }
+
+    function setProfileAvatar(element, imageUrl, fallbackText) {
+        if (!element) return;
+        element.src = imageUrl || createInitialsAvatarDataUrl(fallbackText);
+        element.alt = companyData.name ? companyData.name + " logo" : "Company Logo";
+    }
+
+    function renderCompanyDrawer() {
+        var initials = getInitials(companyData.name);
+        var subtitleParts = [companyData.industry, companyData.location].filter(Boolean);
+        var subtitle = subtitleParts.join(" | ") || "Company profile";
+        var headline = companyData.description
+            ? String(companyData.description).trim().slice(0, 128)
+            : "Keep your company story, hiring details, and contact information up to date for candidates.";
+
+        applyMediaState(drawerCompanyLogo, companyData.logoDataUrl, initials);
+        setProfileAvatar(headerProfileAvatar, companyData.logoDataUrl, initials);
+
+        if (drawerCompanyName) drawerCompanyName.textContent = companyData.name || "Company Name";
+        if (drawerCompanySubtitle) drawerCompanySubtitle.textContent = subtitle;
+        if (drawerCompanyHeadline) drawerCompanyHeadline.textContent = headline;
+    }
+
+    function isCompanyDrawerOpen() {
+        return Boolean(companyDrawerOverlay && !companyDrawerOverlay.hidden);
+    }
+
+    function openCompanyDrawer() {
+        if (!companyDrawerOverlay || !profileMenuButton) return;
+        lastProfileMenuFocusedElement = profileMenuButton;
+        companyDrawerOverlay.hidden = false;
+        document.body.classList.add("modal-open");
+        profileMenuButton.setAttribute("aria-expanded", "true");
+        window.requestAnimationFrame(function () {
+            companyDrawerOverlay.classList.add("open");
+            if (companyDrawerClose) companyDrawerClose.focus();
+        });
+    }
+
+    function closeCompanyDrawer() {
+        if (!companyDrawerOverlay || !profileMenuButton || companyDrawerOverlay.hidden) return;
+        companyDrawerOverlay.classList.remove("open");
+        profileMenuButton.setAttribute("aria-expanded", "false");
+
+        setTimeout(function () {
+            companyDrawerOverlay.hidden = true;
+            document.body.classList.remove("modal-open");
+            if (lastProfileMenuFocusedElement && typeof lastProfileMenuFocusedElement.focus === "function") {
+                lastProfileMenuFocusedElement.focus();
+            }
+        }, 200);
+    }
+
+    function toggleCompanyDrawer() {
+        if (isCompanyDrawerOpen()) { closeCompanyDrawer(); return; }
+        openCompanyDrawer();
     }
 
     function goNext() {
@@ -183,10 +378,10 @@ import {API_BASE_URL} from "../../../constants/constant.js";
         var jobData = {
             title: $("title").value.trim(),
             description: $("description").value.trim(),
-            location: parseCommaSeparated($("location").value),
+            location: getTagFieldValues("location"),
             salaryRange: $("salaryMin").value + "-" + $("salaryMax").value,
             jobType: $("jobType").value,
-            qualifications: parseCommaSeparated($("qualifications").value).map(function(q) {
+            qualifications: getTagFieldValues("qualifications").map(function(q) {
                 return { degree: q };
             }),
             experiences: {
@@ -195,7 +390,7 @@ import {API_BASE_URL} from "../../../constants/constant.js";
             },
             applicationDeadline: $("applicationDeadline").value,
             workMode: $("workMode").value,
-            requiredSkills: parseCommaSeparated($("requiredSkills").value),
+            requiredSkills: getTagFieldValues("skills"),
             vacancies: Number($("vacancies").value)
         };
 
@@ -263,6 +458,10 @@ import {API_BASE_URL} from "../../../constants/constant.js";
         field.addEventListener("change", function () { clearErrorForField(field); });
     });
 
+    initializeTagField("location");
+    initializeTagField("skills");
+    initializeTagField("qualifications");
+
     if (applicationDeadlineInput) {
         applicationDeadlineInput.min = new Date().toISOString().split("T")[0];
     }
@@ -276,35 +475,47 @@ import {API_BASE_URL} from "../../../constants/constant.js";
         });
     }
 
+    renderCompanyDrawer();
+
     if (profileMenuButton) {
         profileMenuButton.addEventListener("click", function (event) {
             event.stopPropagation();
-            toggleProfilePopup();
+            toggleCompanyDrawer();
         });
     }
 
-    if (profilePopup) {
-        profilePopup.addEventListener("click", function (event) { event.stopPropagation(); });
+    if (companyDrawerOverlay) {
+        companyDrawerOverlay.addEventListener("click", function (event) {
+            if (event.target === companyDrawerOverlay) {
+                closeCompanyDrawer();
+            }
+        });
     }
 
     if (logoutButton) {
         logoutButton.addEventListener("click", function () {
             console.log("Logout requested");
-            closeProfilePopup();
+            closeCompanyDrawer();
+        });
+    }
+
+    if (companyDrawerClose) {
+        companyDrawerClose.addEventListener("click", function () {
+            closeCompanyDrawer();
         });
     }
 
     document.addEventListener("click", function (event) {
-        if (!isProfilePopupOpen()) return;
+        if (!isCompanyDrawerOpen()) return;
         if (profileMenuButton && profileMenuButton.contains(event.target)) return;
-        if (profilePopup && profilePopup.contains(event.target)) return;
-        closeProfilePopup();
+        if (companyDrawerOverlay && companyDrawerOverlay.contains(event.target)) return;
+        closeCompanyDrawer();
     });
 
     document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape" && isProfilePopupOpen()) {
+        if (event.key === "Escape" && isCompanyDrawerOpen()) {
             event.preventDefault();
-            closeProfilePopup();
+            closeCompanyDrawer();
         }
     });
 
