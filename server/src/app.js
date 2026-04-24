@@ -7,7 +7,18 @@ import cookieParser from "cookie-parser"
 const app = express()
 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173/",
+    origin: function(origin, callback) {
+        const allowedOrigins = [
+            process.env.CORS_ORIGIN || "http://localhost:5173",
+            process.env.CORS_ORIGIN_2 || "http://localhost:3000"
+        ];
+        
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
     credentials: true
 }))
 app.use(helmet());
