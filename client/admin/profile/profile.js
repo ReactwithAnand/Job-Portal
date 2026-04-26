@@ -3,6 +3,21 @@ import { API_BASE_URL } from "../../constants/constant.js";
 const COMPANY_STORAGE_KEY = "naukriCampusCompanyProfile";
 const tagInputs = new Map();
 
+(async () => {
+    try {
+        const authRes = await fetch(`${API_BASE_URL}/companies/current`, {
+            method: "GET",
+            credentials: "include"
+        });
+
+        if (!authRes.ok) {
+            window.location.href = "../authentication/login/login.html";
+        }
+    } catch (err) {
+        console.error(err);
+    }
+})();
+
 let companyData = loadCompanyData();
 let lastProfileMenuFocusedElement = null;
 
@@ -402,10 +417,21 @@ async function handleLogoUpload(event) {
 }
 
 async function logoutCompany() {
-    closeCompanyDrawer({ restoreFocus: false });
-    localStorage.removeItem(COMPANY_STORAGE_KEY);
-    companyData = createDefaultCompanyData();
-    renderUI();
+    try {
+        const response = await fetch(`${API_BASE_URL}/companies/logout`, {
+            method: "POST",
+            credentials: "include"
+        });
+        if (response.ok) {
+            closeCompanyDrawer({ restoreFocus: false });
+            localStorage.removeItem(COMPANY_STORAGE_KEY);
+            companyData = createDefaultCompanyData();
+            renderUI();
+            window.location.href = "../authentication/login/login.html";
+        }
+    } catch (error) {
+        console.error("Logout failed:", error.message);
+    }
     // window.location.href = "/login";
 }
 

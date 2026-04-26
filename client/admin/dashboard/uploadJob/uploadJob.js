@@ -1,7 +1,77 @@
-import {API_BASE_URL} from "../../../constants/constant.js";
+import { API_BASE_URL } from "../../../constants/constant.js";
+let data = null;
+
+function renderCompanyDrawer() {
+    var company = (data && data.data) ? data.data : {};
+    var initials = getInitials(company.name);
+    var logoUrl = (company.logo && company.logo.url) ? company.logo.url : null;
+    var location = String(company.location || "").trim() || "Location not added";
+
+    var drawerCompanyLogo = document.getElementById("drawerCompanyLogo");
+    var drawerCompanyName = document.getElementById("drawerCompanyName");
+    var drawerCompanyLocation = document.getElementById("drawerCompanyLocation");
+    var headerProfileAvatar = document.getElementById("headerProfileAvatar");
+
+    applyMediaState(drawerCompanyLogo, logoUrl, initials);
+    setProfileAvatar(headerProfileAvatar, logoUrl, initials);
+
+    if (drawerCompanyName) drawerCompanyName.textContent = company.name || "Company Name";
+    if (drawerCompanyLocation) drawerCompanyLocation.textContent = location;
+}
+
+function getInitials(name) {
+    var parts = String(name || "").trim().split(/\s+/).filter(Boolean).slice(0, 2);
+    if (!parts.length) return "NC";
+    return parts.map(function (part) { return part.charAt(0); }).join("").toUpperCase();
+}
+
+function createInitialsAvatarDataUrl(text) {
+    var initials = (text || "NC").slice(0, 2);
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" rx="40" fill="#eef3ff"/><text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" fill="#2e5bff">' + initials + "</text></svg>";
+    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+}
+
+function applyMediaState(element, imageUrl, fallbackText) {
+    if (!element) return;
+    element.classList.remove("has-photo");
+    element.style.backgroundImage = "";
+    element.textContent = fallbackText;
+
+    if (imageUrl) {
+        element.classList.add("has-photo");
+        element.style.backgroundImage = 'url("' + imageUrl + '")';
+    }
+}
+
+function setProfileAvatar(element, imageUrl, fallbackText) {
+    if (!element) return;
+    element.src = imageUrl || createInitialsAvatarDataUrl(fallbackText);
+    element.alt = (data && data.data && data.data.name) ? data.data.name + " logo" : "Company Logo";
+}
+
+(async () => {
+    try {
+        const authRes = await fetch(`${API_BASE_URL}/companies/current`, {
+            method: "GET",
+            credentials: "include"
+        });
+
+        data = await authRes.json();
+
+        if (!authRes.ok) {
+            window.location.href = "../../authentication/login/login.html";
+            return;
+        }
+
+        console.log("Authenticated company data:", data);
+        renderCompanyDrawer();
+
+    } catch (err) {
+        console.error(err);
+    }
+})();
 
 (function () {
-    var COMPANY_STORAGE_KEY = "naukriCampusCompanyProfile";
     var currentStep = 1;
     var totalSteps = 3;
     var sections = Array.from(document.querySelectorAll(".form-section"));
@@ -17,13 +87,8 @@ import {API_BASE_URL} from "../../../constants/constant.js";
     var companyDrawerOverlay = document.getElementById("companyDrawerOverlay");
     var companyDrawerClose = document.getElementById("companyDrawerClose");
     var logoutButton = document.getElementById("logoutBtn");
-    var headerProfileAvatar = document.getElementById("headerProfileAvatar");
-    var drawerCompanyLogo = document.getElementById("drawerCompanyLogo");
-    var drawerCompanyName = document.getElementById("drawerCompanyName");
-    var drawerCompanyLocation = document.getElementById("drawerCompanyLocation");
     var drawerViewProfile = document.getElementById("drawerViewProfile");
     var lastProfileMenuFocusedElement = null;
-    var companyData = loadCompanyData();
     var tagFields = {
         location: createTagFieldConfig("locationTagContainer", "locationInput", "location", "location-chip"),
         skills: createTagFieldConfig("requiredSkillsTagContainer", "requiredSkillsInput", "requiredSkills", "tag-chip"),
@@ -266,74 +331,6 @@ import {API_BASE_URL} from "../../../constants/constant.js";
         }, 5000);
     }
 
-    function loadCompanyData() {
-        try {
-            return JSON.parse(localStorage.getItem(COMPANY_STORAGE_KEY) || "{}");
-        } catch (error) {
-            console.error("Unable to read saved company profile", error);
-            return {};
-        }
-    }
-
-    function getInitials(name) {
-        var parts = String(name || "").trim().split(/\s+/).filter(Boolean).slice(0, 2);
-        if (!parts.length) return "NC";
-        return parts.map(function (part) { return part.charAt(0); }).join("").toUpperCase();
-    }
-
-    function createInitialsAvatarDataUrl(text) {
-        var initials = (text || "NC").slice(0, 2);
-        var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" rx="40" fill="#eef3ff"/><text x="50%" y="53%" dominant-baseline="middle" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" fill="#2e5bff">' + initials + "</text></svg>";
-        return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
-    }
-
-    function applyMediaState(element, imageUrl, fallbackText) {
-        if (!element) return;
-        element.classList.remove("has-photo");
-        element.style.backgroundImage = "";
-        element.textContent = fallbackText;
-
-        if (imageUrl) {
-            element.classList.add("has-photo");
-            element.style.backgroundImage = 'url("' + imageUrl + '")';
-        }
-    }
-
-    function setProfileAvatar(element, imageUrl, fallbackText) {
-        if (!element) return;
-        element.src = imageUrl || createInitialsAvatarDataUrl(fallbackText);
-        element.alt = companyData.name ? companyData.name + " logo" : "Company Logo";
-    }
-
-    function getCompanyLocationLabel() {
-        var locationFields = [
-            companyData.city,
-            companyData.state,
-            companyData.headquartersCity,
-            companyData.headquartersState
-        ].map(function (value) {
-            return String(value || "").trim();
-        }).filter(Boolean);
-
-        if (locationFields.length) {
-            return Array.from(new Set(locationFields)).join(", ");
-        }
-
-        var savedLocation = String(companyData.location || "").trim();
-        return savedLocation || "Location not added";
-    }
-
-    function renderCompanyDrawer() {
-        var initials = getInitials(companyData.name);
-        var location = getCompanyLocationLabel();
-
-        applyMediaState(drawerCompanyLogo, companyData.logoDataUrl, initials);
-        setProfileAvatar(headerProfileAvatar, companyData.logoDataUrl, initials);
-
-        if (drawerCompanyName) drawerCompanyName.textContent = companyData.name || "Company Name";
-        if (drawerCompanyLocation) drawerCompanyLocation.textContent = location;
-    }
-
     function isCompanyDrawerOpen() {
         return Boolean(companyDrawerOverlay && !companyDrawerOverlay.hidden);
     }
@@ -394,7 +391,7 @@ import {API_BASE_URL} from "../../../constants/constant.js";
             location: getTagFieldValues("location"),
             salaryRange: $("salaryMin").value + "-" + $("salaryMax").value,
             jobType: $("jobType").value,
-            qualifications: getTagFieldValues("qualifications").map(function(q) {
+            qualifications: getTagFieldValues("qualifications").map(function (q) {
                 return { degree: q };
             }),
             experiences: {
@@ -424,36 +421,35 @@ import {API_BASE_URL} from "../../../constants/constant.js";
             credentials: "include",
             body: JSON.stringify(jobData)
         })
-        .then(function (response) {
-            return response.json().then(function (data) {
-                return { status: response.status, ok: response.ok, data: data };
+            .then(function (response) {
+                return response.json().then(function (data) {
+                    return { status: response.status, ok: response.ok, data: data };
+                });
+            })
+            .then(function (result) {
+                setSubmitting(false);
+
+                if (!result.ok) {
+                    var message = (result.data && result.data.message)
+                        ? result.data.message
+                        : "Something went wrong. Please try again.";
+                    showApiError(message);
+                    return;
+                }
+
+                console.log("Job created:", result.data);
+
+                if (successOverlay) {
+                    successOverlay.hidden = false;
+                    successOverlay.classList.add("is-visible");
+                }
+            })
+            .catch(function (error) {
+                setSubmitting(false);
+                console.error("Network error:", error);
+                showApiError("Network error — could not reach the server. Make sure the backend is running on port 8000.");
             });
-        })
-        .then(function (result) {
-            setSubmitting(false);
-
-            if (!result.ok) {
-                var message = (result.data && result.data.message)
-                    ? result.data.message
-                    : "Something went wrong. Please try again.";
-                showApiError(message);
-                return;
-            }
-
-            console.log("Job created:", result.data);
-
-            if (successOverlay) {
-                successOverlay.hidden = false;
-                successOverlay.classList.add("is-visible");
-            }
-        })
-        .catch(function (error) {
-            setSubmitting(false);
-            console.error("Network error:", error);
-            showApiError("Network error — could not reach the server. Make sure the backend is running on port 8000.");
-        });
     }
-
 
     postingAsPills.forEach(function (pill) {
         pill.addEventListener("click", function () {
@@ -488,8 +484,6 @@ import {API_BASE_URL} from "../../../constants/constant.js";
         });
     }
 
-    renderCompanyDrawer();
-
     if (profileMenuButton) {
         profileMenuButton.addEventListener("click", function (event) {
             event.stopPropagation();
@@ -506,9 +500,19 @@ import {API_BASE_URL} from "../../../constants/constant.js";
     }
 
     if (logoutButton) {
-        logoutButton.addEventListener("click", function () {
-            console.log("Logout requested");
-            closeCompanyDrawer();
+        logoutButton.addEventListener("click", async function () {
+            try {
+                const response = await fetch(`${API_BASE_URL}/companies/logout`, {
+                    method: "POST",
+                    credentials: "include"
+                });
+                if (response.ok) {
+                    closeCompanyDrawer();
+                    window.location.href = "../../authentication/login/login.html";
+                }
+            } catch (error) {
+                console.error("Logout failed:", error.message);
+            }
         });
     }
 
