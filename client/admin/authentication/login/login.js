@@ -103,7 +103,7 @@ document.getElementById("signin-btn").addEventListener("click", async () => {
     }
 
     // window.location.href = "../../dashboard/controlJob/controlJob.html";
-    window.location.href = "/admin/dashboard/controlJob";
+    window.location.href = "/admin/dashboard/controlJob/controlJob";
 
   } catch (err) {
     showError("signin-error", "Network error. Please try again.");

@@ -12,7 +12,7 @@ const tagInputs = new Map();
 
         if (!authRes.ok) {
             // window.location.href = "../authentication/login/login.html";
-            window.location.href = "/admin/authentication/login";
+            window.location.href = "/admin/authentication/login/login";
         }
     } catch (err) {
         console.error(err);
@@ -108,7 +108,7 @@ function bindEvents() {
     document.getElementById("companyDrawerClose")?.addEventListener("click", () => closeCompanyDrawer());
     document.getElementById("drawerViewProfile")?.addEventListener("click", () => {
         // window.location.href = "profile.html";
-        window.location.href = "/admin/profile";
+        window.location.href = "/admin/profile/profile";
     });
 
     document.querySelectorAll(".modal-overlay").forEach((modal) => {
@@ -430,7 +430,7 @@ async function logoutCompany() {
             companyData = createDefaultCompanyData();
             renderUI();
             // window.location.href = "../authentication/login/login.html";
-            window.location.href = "/admin/authentication/login";
+            window.location.href = "/admin/authentication/login/login";
         }
     } catch (error) {
         console.error("Logout failed:", error.message);

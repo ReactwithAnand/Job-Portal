@@ -12,7 +12,7 @@ const PROGRESS_RING_START_ANGLE = 225;
 
         if (!authRes.ok) {
             // window.location.href = "../authentication/login/login.html";
-            window.location.href = "/candidate/authentication/login";
+            window.location.href = "/candidate/authentication/login/login";
         }
     } catch (err) {
         console.error(err);
@@ -875,7 +875,7 @@ logoutBtn.addEventListener("click", async () => {
         if (json.success) {
             localStorage.removeItem("userData");
             // window.location.href = "../authentication/login/login.html";
-            window.location.href = "/candidate/authentication/login";
+            window.location.href = "/candidate/authentication/login/login";
         } else {
             alert(json.message || "Failed to logout");
         }

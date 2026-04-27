@@ -60,7 +60,7 @@ function setProfileAvatar(element, imageUrl, fallbackText) {
 
         if (!authRes.ok) {
             // window.location.href = "../../authentication/login/login.html";
-            window.location.href = "/admin/authentication/login";
+            window.location.href = "/admin/authentication/login/login";
             return;
         }
 
@@ -510,7 +510,7 @@ function setProfileAvatar(element, imageUrl, fallbackText) {
                 if (response.ok) {
                     closeCompanyDrawer();
                     // window.location.href = "../../authentication/login/login.html";
-                    window.location.href = "/admin/authentication/login";
+                    window.location.href = "/admin/authentication/login/login";
                 }
             } catch (error) {
                 console.error("Logout failed:", error.message);
@@ -521,7 +521,7 @@ function setProfileAvatar(element, imageUrl, fallbackText) {
     if (drawerViewProfile) {
         drawerViewProfile.addEventListener("click", function () {
             // window.location.href = "../../profile/profile.html";
-            window.location.href = "/admin/profile";
+            window.location.href = "/admin/profile/profile";
         });
     }
 

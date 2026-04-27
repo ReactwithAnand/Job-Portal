@@ -23,7 +23,7 @@ const icons = {
 
         if (!authRes.ok) {
             // window.location.href = "../authentication/login/login.html";
-            window.location.href = "/candidate/authentication/login";
+            window.location.href = "/candidate/authentication/login/login";
         }
     } catch (err) {
         console.error(err);
@@ -336,7 +336,7 @@ function bindDrawerEvents() {
     profileLink?.addEventListener('click', event => {
         event.preventDefault();
         // window.location.href = '../profile/profile.html';
-        window.location.href = '/candidate/profile';
+        window.location.href = '/candidate/profile/profile';
     });
 
     // logout
@@ -356,7 +356,7 @@ function bindDrawerEvents() {
         } finally {
             localStorage.removeItem('userData');
             // window.location.href = '../authentication/login/login.html';
-            window.location.href = '/candidate/authentication/login';
+            window.location.href = '/candidate/authentication/login/login';
         }
     });
 }
