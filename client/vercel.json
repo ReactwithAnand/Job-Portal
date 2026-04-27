@@ -1,21 +1,11 @@
 {
-  "version": 2,
-  "cleanUrls": true,
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/candidate/authentication/login/login",
-      "permanent": false
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/home",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/$1.html"
-    }
-  ]
+	"version": 2,
+	"cleanUrls": true,
+	"redirects": [
+		{
+			"source": "/",
+			"destination": "/candidate/authentication/login/login",
+			"permanent": false
+		}
+	]
 }

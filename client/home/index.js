@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./constants/constant.js";
+import { API_BASE_URL } from "../constants/constant.js";
 
 //icons
 const icons = {

@@ -13,7 +13,7 @@ async function redirectBasedOnProfile() {
 
   if (percentage >= 50) {
     // window.location.href = "../../../index.html";
-    window.location.href = "/index";
+    window.location.href = "/home/index";
   } else {
     // window.location.href = "../../profile/profile.html";
     window.location.href = "/candidate/profile/profile";
