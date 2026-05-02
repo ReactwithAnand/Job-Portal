@@ -44,6 +44,12 @@ async function redirectBasedOnProfile() {
 function navigate(fromId, toId) {
   const fromPage = document.getElementById(fromId);
   const toPage = document.getElementById(toId);
+  const targetIndex = pages.findIndex((page) => page?.id === toId);
+
+  if (targetIndex !== -1) {
+    showPage(targetIndex);
+    return;
+  }
 
   if (fromPage && toPage) {
     fromPage.classList.remove('active');
@@ -125,10 +131,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (page2Next) {
     page2Next.addEventListener("click", () => {
+      if (!validateCurrentPage(1)) {
+        return;
+      }
+
       const inputs = document.querySelectorAll("#page2 input");
       registerData.name = inputs[0].value;
       registerData.email = inputs[1].value;
-      navigate('page2', 'page3');
+      showPage(2);
     });
   }
 
@@ -141,16 +151,21 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (page3Next) {
-    page3Next.addEventListener("click", () => {
-      const selects = document.querySelectorAll("#page3 select");
-      const month = selects[0].value;
-      const day = selects[1].value;
-      const year = selects[2].value;
-      const gender = selects[3].value;
+    page3Next.addEventListener("click", (event) => {
+      event.preventDefault();
 
-      registerData.DOB = `${year}-${month}-${day}`;
+      if (!validateCurrentPage(2)) {
+        return;
+      }
+
+      const month = monthSelect?.value ?? "";
+      const day = daySelect?.value ?? "";
+      const year = yearSelect?.value ?? "";
+      const gender = genderSelect?.value ?? "";
+
+      registerData.DOB = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
       registerData.gender = gender;
-      navigate('page3', 'page4');
+      showPage(3);
     });
   }
 
@@ -175,7 +190,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if (page4Submit) {
-    page4Submit.addEventListener("click", async () => {
+    page4Submit.addEventListener("click", async (event) => {
+      event.preventDefault();
+
+      if (!validateCurrentPage(3)) {
+        return;
+      }
+
       const password = document.getElementById("new-password").value;
       const confirmPassword = document.getElementById("confirm-password").value;
 
@@ -302,6 +323,16 @@ function validateCurrentPage(pageIndex) {
 document.addEventListener('input', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') {
     e.target.style.border = '';
+    e.target.classList.remove('error-border');
+    const warning = e.target.parentNode.querySelector('.warning-msg');
+    if (warning) warning.remove();
+  }
+});
+
+document.addEventListener('change', (e) => {
+  if (e.target.tagName === 'SELECT') {
+    e.target.style.border = '';
+    e.target.classList.remove('error-border');
     const warning = e.target.parentNode.querySelector('.warning-msg');
     if (warning) warning.remove();
   }
@@ -313,6 +344,7 @@ document.addEventListener('input', (e) => {
 const monthSelect = document.querySelector('select[aria-label="Month"]');
 const daySelect = document.querySelector('select[aria-label="Day"]');
 const yearSelect = document.querySelector('select[aria-label="Year"]');
+const genderSelect = document.querySelector('select[aria-label="Gender"]');
 
 // Populate Year Dropdown (e.g., from current year down to 1900)
 function populateYears() {
@@ -382,47 +414,3 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// ==========================================
-// 5. Button Event Listeners & Flow Logic
-// ==========================================
-
-// Page 1: Login
-document.getElementById('btn-login-submit')?.addEventListener('click', () => {
-  if (validateCurrentPage(0)) {
-    console.log("Login processed!"); // Replace with real login logic
-  }
-});
-
-document.getElementById('btn-go-to-register')?.addEventListener('click', () => {
-  showPage(1); // Go to Page 2
-});
-
-// Page 2: Register Step 1
-document.getElementById('btn-back-to-login')?.addEventListener('click', () => {
-  showPage(0);
-});
-
-document.getElementById('btn-register-step1-next')?.addEventListener('click', () => {
-  if (validateCurrentPage(1)) showPage(2);
-});
-
-// Page 3: Register Step 2
-document.getElementById('btn-back-to-register-step1')?.addEventListener('click', () => {
-  showPage(1);
-});
-
-document.getElementById('btn-register-step2-next')?.addEventListener('click', () => {
-  if (validateCurrentPage(2)) showPage(3);
-});
-
-// Page 4: Final Password Step
-document.getElementById('btn-back-to-register-step2')?.addEventListener('click', () => {
-  showPage(2);
-});
-
-// Password Toggle Logic
-document.getElementById('toggle-password-checkbox')?.addEventListener('change', (e) => {
-  const type = e.target.checked ? 'text' : 'password';
-  document.getElementById('new-password').type = type;
-  document.getElementById('confirm-password').type = type;
-});
