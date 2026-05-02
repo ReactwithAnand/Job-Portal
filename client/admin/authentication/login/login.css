@@ -164,6 +164,12 @@
     outline-color: #7aa2ff;
   }
 
+  html.theme-dark .auth-role-label {
+    border-color: rgba(125, 166, 255, 0.24);
+    background: rgba(18, 27, 43, 0.58);
+    color: #d8e4f8;
+  }
+
   /* Step Container */
   .step {
     display: none;
@@ -233,6 +239,21 @@
     display: flex;
     align-items: center;
     gap: 6px;
+  }
+
+  .auth-role-label {
+    display: inline-flex;
+    align-self: flex-start;
+    margin: -4px 0 12px;
+    padding: 0.38rem 0.8rem;
+    border: 1px solid rgba(30, 58, 138, 0.12);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.54);
+    color: var(--muted);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
   }
 
 

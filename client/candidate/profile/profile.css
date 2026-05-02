@@ -1497,8 +1497,12 @@
      outline: none;
  }
 
- html.theme-dark .menu-item--logout svg {
+html.theme-dark .menu-item--logout svg {
      stroke: #fda4af;
+ }
+
+ html.theme-dark #summaryText {
+     color: var(--text-soft) !important;
  }
 
  /* NOTIFICATIONS DRAWER CSS */
