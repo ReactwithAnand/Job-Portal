@@ -562,7 +562,7 @@ const isprofileCompleteInPercentage = asyncHandler(async (req, res) => {
 
     // 1. Basic Info (name + email)
     if (user.name && user.email) {
-        earnedPoints += 15;
+        earnedPoints += 5;
     }
 
     // 2. Profile Picture
@@ -614,7 +614,7 @@ const isprofileCompleteInPercentage = asyncHandler(async (req, res) => {
 
     // 10. Resume
     if (user.resume?.url) {
-        earnedPoints += 5;
+        earnedPoints += 10;
     }
 
     // 11. Languages
