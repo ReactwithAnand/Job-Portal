@@ -1,6 +1,8 @@
 import { API_BASE_URL } from "../../../constants/constant.js";
 let data = null;
 
+const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+
 function renderCompanyDrawer() {
     var company = (data && data.data) ? data.data : {};
     var initials = getInitials(company.name);
@@ -33,13 +35,34 @@ function createInitialsAvatarDataUrl(text) {
 
 function applyMediaState(element, imageUrl, fallbackText) {
     if (!element) return;
+
+    var logo = String(imageUrl || "").trim();
+    var name = String(fallbackText || "");
+    var hasImage =
+        logo.startsWith("data:image") ||
+        logo.startsWith("http://") ||
+        logo.startsWith("https://") ||
+        logo.startsWith("/") ||
+        logo.startsWith("./") ||
+        logo.startsWith("../") ||
+        logo.startsWith("blob:");
+
+    element.innerHTML = "";
     element.classList.remove("has-photo");
     element.style.backgroundImage = "";
-    element.textContent = fallbackText;
 
-    if (imageUrl) {
+    if (hasImage) {
+        var img = document.createElement("img");
+        img.src = logo;
+        img.className = "logo-img";
+        img.alt = (data && data.data && data.data.name) ? data.data.name + " logo" : "Company Logo";
+        element.appendChild(img);
         element.classList.add("has-photo");
-        element.style.backgroundImage = 'url("' + imageUrl + '")';
+    } else {
+        var initial = document.createElement("span");
+        initial.className = "logo-initial";
+        initial.textContent = name.charAt(0).toUpperCase();
+        element.appendChild(initial);
     }
 }
 
@@ -59,7 +82,8 @@ function setProfileAvatar(element, imageUrl, fallbackText) {
         data = await authRes.json();
 
         if (!authRes.ok) {
-            window.location.href = "../../authentication/login/login.html";
+            // window.location.href = "../../authentication/login/login.html";
+            window.location.href = isLocal ? "../../authentication/login/login.html" : "/admin/authentication/login/login";
             return;
         }
 
@@ -508,7 +532,8 @@ function setProfileAvatar(element, imageUrl, fallbackText) {
                 });
                 if (response.ok) {
                     closeCompanyDrawer();
-                    window.location.href = "../../authentication/login/login.html";
+                    // window.location.href = "../../authentication/login/login.html";
+                    window.location.href = isLocal ? "../../authentication/login/login.html" : "/admin/authentication/login/login";
                 }
             } catch (error) {
                 console.error("Logout failed:", error.message);
@@ -518,7 +543,8 @@ function setProfileAvatar(element, imageUrl, fallbackText) {
 
     if (drawerViewProfile) {
         drawerViewProfile.addEventListener("click", function () {
-            window.location.href = "../../profile/profile.html";
+            // window.location.href = "../../profile/profile.html";
+            window.location.href = isLocal ? "../../profile/profile.html" : "/admin/profile/profile";
         });
     }
 

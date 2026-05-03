@@ -1,4 +1,4 @@
-import { API_BASE_URL } from "./constants/constant.js";
+import { API_BASE_URL } from "../constants/constant.js";
 
 //icons
 const icons = {
@@ -15,6 +15,8 @@ const icons = {
 let currentUser = null;
 let profileCompletion = 0;
 
+const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+
 (async () => {
     try {
         // auth check + current user
@@ -24,7 +26,8 @@ let profileCompletion = 0;
         });
 
         if (!userRes.ok) {
-            window.location.href = "candidate/authentication/login/login.html";
+            // window.location.href = "candidate/authentication/login/login.html";
+            window.location.href = isLocal ? "candidate/authentication/login/login.html" : "/candidate/authentication/login/login";
             return;
         }
 
@@ -47,7 +50,8 @@ let profileCompletion = 0;
 
     } catch (err) {
         console.error("Init error:", err);
-        window.location.href = "candidate/authentication/login/login.html";
+        // window.location.href = "candidate/authentication/login/login.html";
+        window.location.href = isLocal ? "candidate/authentication/login/login.html" : "/candidate/authentication/login/login";
     }
 })();
 
@@ -381,7 +385,8 @@ async function handleLogout() {
     } catch (error) {
         console.warn("Logout request failed.", error);
     } finally {
-        window.location.href = "candidate/authentication/login/login.html";
+        // window.location.href = "candidate/authentication/login/login.html";
+        window.location.href = isLocal ? "candidate/authentication/login/login.html" : "/candidate/authentication/login/login";
     }
 }
 
@@ -396,7 +401,8 @@ function bindDrawerEvents() {
     });
     document.querySelector(".profile-link")?.addEventListener("click", (event) => {
         event.preventDefault();
-        window.location.href = "candidate/profile/profile.html";
+        // window.location.href = "candidate/profile/profile.html";
+        window.location.href = isLocal ? "candidate/profile/profile.html" : "/candidate/profile/profile";
     });
     document.getElementById("logoutBtn")?.addEventListener("click", handleLogout);
 

@@ -3,6 +3,8 @@ import { API_BASE_URL as API_URL } from "../../constants/constant.js";
 const API_BASE_URL = `${API_URL}/users`;
 const PROGRESS_RING_START_ANGLE = 225;
 
+const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+
 (async () => {
     try {
         const authRes = await fetch(`${API_BASE_URL}/current`, {
@@ -11,7 +13,8 @@ const PROGRESS_RING_START_ANGLE = 225;
         });
 
         if (!authRes.ok) {
-            window.location.href = "../authentication/login/login.html";
+            // window.location.href = "../authentication/login/login.html";
+            window.location.href = isLocal ? "../authentication/login/login.html" : "/candidate/authentication/login/login";
         }
     } catch (err) {
         console.error(err);
@@ -68,6 +71,18 @@ function bindEvents() {
     document.querySelector(".drawer-close").addEventListener("click", () => closeDrawer("profileDrawerOverlay"));
     document.querySelector(".notifications-close").addEventListener("click", () => closeDrawer("notificationsOverlay"));
     document.querySelector(".notifications-cta").addEventListener("click", () => closeDrawer("notificationsOverlay"));
+
+    document.getElementById("profileDrawerOverlay").addEventListener("click", (event) => {
+        if (event.target === event.currentTarget) {
+            closeDrawer("profileDrawerOverlay");
+        }
+    });
+
+    document.getElementById("notificationsOverlay").addEventListener("click", (event) => {
+        if (event.target === event.currentTarget) {
+            closeDrawer("notificationsOverlay");
+        }
+    });
 
     // Drawer "View & Update Profile" link
     document.querySelector(".profile-link").addEventListener("click", () => closeDrawer("profileDrawerOverlay"));
@@ -310,8 +325,14 @@ function renderUI() {
                         <a href="${userData.resume.url}" target="_blank" class="text-link" style="font-size:0.85rem;">View File</a>
                     </div>
                 </div>
-                <button class="experience-remove-button" id="deleteResumeBtn">
-                    <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+                <button type="button" class="delete-btn" id="deleteResumeBtn" aria-label="Delete resume">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 7h16"></path>
+                        <path d="M10 11v6"></path>
+                        <path d="M14 11v6"></path>
+                        <path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"></path>
+                        <path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+                    </svg>
                 </button>
             </div>
         `;
@@ -873,7 +894,8 @@ logoutBtn.addEventListener("click", async () => {
         const json = await res.json();
         if (json.success) {
             localStorage.removeItem("userData");
-            window.location.href = "../authentication/login/login.html";
+            // window.location.href = "../authentication/login/login.html";
+            window.location.href = isLocal ? "../authentication/login/login.html" : "/candidate/authentication/login/login";
         } else {
             alert(json.message || "Failed to logout");
         }

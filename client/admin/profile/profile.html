@@ -5,7 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Company profile - Naukri Campus</title>
+    <script>(function () { try { if (localStorage.getItem("theme") === "dark") { document.documentElement.classList.add("theme-dark"); } } catch (error) { } })();</script>
+    <link rel="shortcut icon" href="../../assets/images/JobNest-logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="../../assets/css/theme.css">
     <link rel="stylesheet" href="profile.css">
+    <script src="../../assets/js/theme.js" defer></script>
     <script src="profile.js" type="module" defer></script>
 </head>
 
@@ -13,17 +17,33 @@
     <nav class="navbar">
         <a href="../dashboard/controlJob/controlJob.html" style="text-decoration: none;">
             <div class="navbar-brand">
-            <svg class="icon" style="width:24px; height:24px" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                <line x1="12" y1="22.08" x2="12" y2="12"></line>
-            </svg>
-            TechCorp
-        </div>
-        <div class="navbar-links">
-            <a href="../dashboard/uploadJob/uploadJob.html" class="nav-link"><b>Upload Job</b></a>
+                <img src="../../assets/images/JobNest-logo.png" alt="JobNest logo"
+                    style="width:24px; height:24px; object-fit: contain; border-radius: 6px;">
+                <span style="color: #1f6feb;">Job</span><span style="color: #0f2d6b; margin-left: -6px;">Nest</span>
+            </div>
+            <div class="navbar-links">
+                <a href="../dashboard/controlJob/controlJob.html" class="nav-link"><b>Dashboard</b></a>
+                <a href="../dashboard/uploadJob/uploadJob.html" class="nav-link"><b>Upload Job</b></a>
         </a>
         <div class="navbar-user">
+            <button class="theme-toggle" type="button" data-theme-toggle aria-label="Switch to dark mode"
+                aria-pressed="false">
+                <svg class="theme-toggle-sun" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4.5"></circle>
+                    <path d="M12 2v2"></path>
+                    <path d="M12 20v2"></path>
+                    <path d="m4.93 4.93 1.41 1.41"></path>
+                    <path d="m17.66 17.66 1.41 1.41"></path>
+                    <path d="M2 12h2"></path>
+                    <path d="M20 12h2"></path>
+                    <path d="m4.93 19.07 1.41-1.41"></path>
+                    <path d="m17.66 6.34 1.41-1.41"></path>
+                </svg>
+                <svg class="theme-toggle-moon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 0 1 11.21 3 7 7 0 1 0 12 21a9 9 0 0 0 9-8.21Z"></path>
+                </svg>
+                <span class="theme-toggle-ball" aria-hidden="true"></span>
+            </button>
             <button class="profile-menu" id="profileMenuButton" type="button" aria-label="Account menu"
                 aria-haspopup="dialog" aria-expanded="false" aria-controls="companyDrawerOverlay">
                 <span class="menu-lines" aria-hidden="true"><span></span></span>
@@ -85,8 +105,7 @@
                     </div>
                     <div class="company-meta-item">
                         <svg viewBox="0 0 24 24">
-                            <path
-                                d="M10 13a5 5 0 0 0 7.1 0l1.4-1.4a5 5 0 0 0-7.1-7.1L10.2 5.7"></path>
+                            <path d="M10 13a5 5 0 0 0 7.1 0l1.4-1.4a5 5 0 0 0-7.1-7.1L10.2 5.7"></path>
                             <path d="M14 11a5 5 0 0 0-7.1 0L5.5 12.4a5 5 0 1 0 7.1 7.1l1.2-1.2"></path>
                         </svg>
                         <div>
@@ -171,15 +190,10 @@
         <div class="footer-inner">
             <div class="footer-brand-block">
                 <a class="brand footer-brand" href="#">
-                    <svg viewBox="0 0 36 36">
-                        <circle cx="18" cy="18" r="17" fill="currentColor"></circle>
-                        <path
-                            d="M16.2 7.8c-4.4.7-8 4.3-8.7 8.7 2.5-1.6 5.9-1.4 8.2.8 2.3 2.3 2.5 5.7.8 8.2 4.4-.7 8-4.3 8.7-8.7-2.5 1.6-5.9 1.4-8.2-.8-2.3-2.3-2.5-5.7-.8-8.2Z"
-                            fill="#fff"></path>
-                        <circle cx="18" cy="18" r="4.1" fill="#fff"></circle>
-                    </svg>
-                    <span class="brand-wordmark"><span class="brand-blue">naukri</span><span
-                            class="brand-orange">campus</span></span>
+                    <img src="../../assets/images/JobNest-logo.png" alt="JobNest logo"
+                        style="width:36px; height:36px; object-fit: contain; border-radius: 8px;">
+                    <span class="brand-wordmark"><span style="color: #1f6feb;">Job</span><span
+                            style="color: #0f2d6b; margin-left: -3px;">Nest</span></span>
                 </a>
             </div>
             <div class="footer-links">
@@ -203,7 +217,8 @@
 
     <div class="company-overlay" id="companyDrawerOverlay" hidden>
         <aside class="company-sidebar" role="dialog" aria-modal="true" aria-labelledby="drawerCompanyName">
-            <button class="company-sidebar-close" id="companyDrawerClose" type="button" aria-label="Close company panel">
+            <button class="company-sidebar-close" id="companyDrawerClose" type="button"
+                aria-label="Close company panel">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M6 6 18 18"></path>
                     <path d="M18 6 6 18"></path>
@@ -239,7 +254,9 @@
                     <button class="company-menu-item" id="drawerSettings" type="button">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <circle cx="12" cy="12" r="3"></circle>
-                            <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5h.1a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.4 1z"></path>
+                            <path
+                                d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5h.1a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.4 1z">
+                            </path>
                         </svg>
                         <span>Settings</span>
                     </button>

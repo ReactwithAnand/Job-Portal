@@ -14,6 +14,8 @@ const icons = {
     pending: '<svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 15 15"></polyline></svg>'
 };
 
+const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+
 (async () => {
     try {
         const authRes = await fetch(`${API_BASE_URL}/users/current`, {
@@ -22,7 +24,8 @@ const icons = {
         });
 
         if (!authRes.ok) {
-            window.location.href = "../authentication/login/login.html";
+            // window.location.href = "../authentication/login/login.html";
+            window.location.href = isLocal ? "../authentication/login/login.html" : "/candidate/authentication/login/login";
         }
     } catch (err) {
         console.error(err);
@@ -334,7 +337,8 @@ function bindDrawerEvents() {
 
     profileLink?.addEventListener('click', event => {
         event.preventDefault();
-        window.location.href = '../profile/profile.html';
+        // window.location.href = '../profile/profile.html';
+        window.location.href = isLocal ? '../profile/profile.html' : '/candidate/profile/profile';
     });
 
     // logout
@@ -353,7 +357,8 @@ function bindDrawerEvents() {
             console.warn('Logout request failed (proceeding anyway):', err.message);
         } finally {
             localStorage.removeItem('userData');
-            window.location.href = '../authentication/login/login.html';
+            // window.location.href = '../authentication/login/login.html';
+            window.location.href = isLocal ? '../authentication/login/login.html' : '/candidate/authentication/login/login';
         }
     });
 }

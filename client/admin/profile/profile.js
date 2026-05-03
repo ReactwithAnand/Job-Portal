@@ -3,6 +3,8 @@ import { API_BASE_URL } from "../../constants/constant.js";
 const COMPANY_STORAGE_KEY = "naukriCampusCompanyProfile";
 const tagInputs = new Map();
 
+const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+
 (async () => {
     try {
         const authRes = await fetch(`${API_BASE_URL}/companies/current`, {
@@ -11,7 +13,8 @@ const tagInputs = new Map();
         });
 
         if (!authRes.ok) {
-            window.location.href = "../authentication/login/login.html";
+            // window.location.href = "../authentication/login/login.html";
+            window.location.href = isLocal ? "../authentication/login/login.html" : "/admin/authentication/login/login";
         }
     } catch (err) {
         console.error(err);
@@ -106,7 +109,8 @@ function bindEvents() {
 
     document.getElementById("companyDrawerClose")?.addEventListener("click", () => closeCompanyDrawer());
     document.getElementById("drawerViewProfile")?.addEventListener("click", () => {
-        window.location.href = "profile.html";
+        // window.location.href = "profile.html";
+        window.location.href = isLocal ? "profile.html" : "/admin/profile/profile";
     });
 
     document.querySelectorAll(".modal-overlay").forEach((modal) => {
@@ -427,7 +431,8 @@ async function logoutCompany() {
             localStorage.removeItem(COMPANY_STORAGE_KEY);
             companyData = createDefaultCompanyData();
             renderUI();
-            window.location.href = "../authentication/login/login.html";
+            // window.location.href = "../authentication/login/login.html";
+            window.location.href = isLocal ? "../authentication/login/login.html" : "/admin/authentication/login/login";
         }
     } catch (error) {
         console.error("Logout failed:", error.message);
@@ -658,13 +663,33 @@ function renderChipCloud(containerId, items, emptyLabel) {
 function applyMediaState(element, imageUrl, fallbackText) {
     if (!element) return;
 
+    const logo = String(imageUrl || "").trim();
+    const name = String(fallbackText || "");
+    const hasImage =
+        logo.startsWith("data:image") ||
+        logo.startsWith("http://") ||
+        logo.startsWith("https://") ||
+        logo.startsWith("/") ||
+        logo.startsWith("./") ||
+        logo.startsWith("../") ||
+        logo.startsWith("blob:");
+
+    element.innerHTML = "";
     element.classList.remove("has-photo");
     element.style.backgroundImage = "";
-    element.textContent = fallbackText;
 
-    if (imageUrl) {
+    if (hasImage) {
+        const img = document.createElement("img");
+        img.src = logo;
+        img.className = "logo-img";
+        img.alt = companyData.name ? `${companyData.name} logo` : "Company Logo";
+        element.appendChild(img);
         element.classList.add("has-photo");
-        element.style.backgroundImage = `url("${imageUrl}")`;
+    } else {
+        const initial = document.createElement("span");
+        initial.className = "logo-initial";
+        initial.textContent = name.charAt(0).toUpperCase();
+        element.appendChild(initial);
     }
 }
 
